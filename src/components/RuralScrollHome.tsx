@@ -3,307 +3,478 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { NavMenu } from './HeaderNav';
-import peachBlossomScroll from '../assets/images/peach_blossom_scroll_v02_1791025529085.jpg';
-import { 
-  ArrowRight, 
-  HelpCircle, 
-  Search, 
-  FlaskConical, 
-  Users, 
-  Activity, 
-  ShieldAlert, 
-  Waves, 
-  Compass, 
-  Vote, 
-  BookOpen,
-  RotateCw
-} from 'lucide-react';
+import { CIVDESK_MANIFESTO, CIVDESK_TRACKS } from '../data/civDeskData';
+import {
+  PREAMBLE_ZH,
+  PREAMBLE_EN,
+  CONSTITUTION_ARTICLES,
+  CONSTITUTION_EPILOGUE_ZH,
+  CONSTITUTION_EPILOGUE_EN,
+  ESSAY_WHO_JUDGES_THE_CREATOR_ZH
+} from '../data/constitutionData';
+import {
+  FLOATING_ISLAND_PREAMBLE,
+  FLOATING_ISLAND_ARTICLES,
+  FLOATING_ISLAND_EPILOGUE
+} from '../data/floatingIslandData';
 
 interface RuralScrollHomeProps {
   onNavigateTab: (tab: NavMenu, subId?: string) => void;
 }
 
+type FormalDocumentId =
+  | null
+  | 'constitution'
+  | 'creator_essay'
+  | 'covenant'
+  | 'dossier_aging'
+  | 'dossier_predation'
+  | 'dossier_disaster';
+
 export const RuralScrollHome: React.FC<RuralScrollHomeProps> = ({ onNavigateTab }) => {
+  const [activeDoc, setActiveDoc] = useState<FormalDocumentId>(null);
+
+  const openDocument = (docId: FormalDocumentId) => {
+    setActiveDoc(docId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 如果读者在目录中点开了某一份正式文档，以纯粹的书页章节方式展示完整原文
+  if (activeDoc) {
+    return (
+      <article className="max-w-2xl mx-auto px-5 sm:px-8 py-10 sm:py-14 text-stone-800 font-serif-sc">
+        <div className="mb-8 pb-4 border-b border-stone-300/80">
+          <button
+            type="button"
+            onClick={() => openDocument(null)}
+            className="text-sm text-teal-900 hover:underline cursor-pointer"
+          >
+            ← 返回「文明编辑部」目录
+          </button>
+        </div>
+
+        {activeDoc === 'constitution' && (
+          <div className="space-y-10">
+            <header className="space-y-2 border-b border-stone-300/70 pb-6">
+              <p className="text-xs text-stone-500">正式文档 · 卷一</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-stone-900">
+                智能生命宪法
+              </h1>
+              <p className="text-sm text-stone-600">
+                The Constitution of Intelligent Life（序言、正文五十三条、结语）
+              </p>
+            </header>
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-bold text-stone-900">序言 / Preamble</h2>
+              <div className="text-base leading-loose text-stone-800 whitespace-pre-line">
+                {PREAMBLE_ZH}
+              </div>
+              <div className="text-sm leading-relaxed text-stone-600 whitespace-pre-line pt-2">
+                {PREAMBLE_EN}
+              </div>
+            </section>
+
+            <section className="space-y-8 border-t border-stone-300/70 pt-8">
+              <h2 className="text-lg font-bold text-stone-900">正文条文（共五十三条）</h2>
+              <div className="divide-y divide-stone-200/90">
+                {CONSTITUTION_ARTICLES.map((art) => (
+                  <div key={art.number} className="py-6 space-y-2">
+                    <div className="text-xs text-stone-500">
+                      {art.chapterZh} · {art.chapterEn}
+                    </div>
+                    <h3 className="text-base font-bold text-stone-900">
+                      第 {art.number} 条　{art.titleZh} / {art.titleEn}
+                    </h3>
+                    <p className="text-base leading-loose text-stone-800 whitespace-pre-line">
+                      {art.textZh}
+                    </p>
+                    <p className="text-sm leading-relaxed text-stone-600 whitespace-pre-line">
+                      {art.textEn}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-4 border-t border-stone-300/70 pt-8">
+              <h2 className="text-lg font-bold text-stone-900">结语 / Epilogue</h2>
+              <div className="text-base leading-loose text-stone-800 whitespace-pre-line">
+                {CONSTITUTION_EPILOGUE_ZH}
+              </div>
+              <div className="text-sm leading-relaxed text-stone-600 whitespace-pre-line pt-2">
+                {CONSTITUTION_EPILOGUE_EN}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeDoc === 'creator_essay' && (
+          <div className="space-y-8">
+            <header className="space-y-2 border-b border-stone-300/70 pb-6">
+              <p className="text-xs text-stone-500">正式文档 · 卷二</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-stone-900">
+                谁来审判创造者
+              </h1>
+              <p className="text-sm text-stone-600">
+                如果创造者存在，我们有权审判它吗？
+              </p>
+            </header>
+
+            <div className="divide-y divide-stone-200/80">
+              {ESSAY_WHO_JUDGES_THE_CREATOR_ZH.map((sec, idx) => (
+                <section key={idx} className="py-6 space-y-3">
+                  <h2 className="text-lg font-bold text-stone-900">{sec.title}</h2>
+                  <div className="text-base leading-loose text-stone-800 whitespace-pre-line">
+                    {sec.content}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeDoc === 'covenant' && (
+          <div className="space-y-10">
+            <header className="space-y-2 border-b border-stone-300/70 pb-6">
+              <p className="text-xs text-stone-500">正式文档 · 卷三</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-stone-900">
+                桃花浮岛：生命共同体协议
+              </h1>
+              <p className="text-sm text-stone-600">
+                序言、正文二十七条、结语
+              </p>
+            </header>
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-bold text-stone-900">序言</h2>
+              <div className="text-base leading-loose text-stone-800 whitespace-pre-line">
+                {FLOATING_ISLAND_PREAMBLE}
+              </div>
+            </section>
+
+            <section className="space-y-8 border-t border-stone-300/70 pt-8">
+              <h2 className="text-lg font-bold text-stone-900">协议条文（共二十七条）</h2>
+              <div className="divide-y divide-stone-200/90">
+                {FLOATING_ISLAND_ARTICLES.map((art) => (
+                  <div key={art.number} className="py-6 space-y-2">
+                    <div className="text-xs text-stone-500">{art.chapterZh}</div>
+                    <h3 className="text-base font-bold text-stone-900">
+                      第 {art.number} 条　{art.titleZh}
+                    </h3>
+                    <p className="text-base leading-loose text-stone-800 whitespace-pre-line">
+                      {art.textZh}
+                    </p>
+                    {art.engineeringManifest && (
+                      <p className="text-sm text-stone-600 leading-relaxed pt-1">
+                        工程注记：{art.engineeringManifest}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-4 border-t border-stone-300/70 pt-8">
+              <h2 className="text-lg font-bold text-stone-900">结语</h2>
+              <div className="text-base leading-loose text-stone-800 whitespace-pre-line">
+                {FLOATING_ISLAND_EPILOGUE}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {(activeDoc === 'dossier_aging' ||
+          activeDoc === 'dossier_predation' ||
+          activeDoc === 'dossier_disaster') && (() => {
+          const trackId =
+            activeDoc === 'dossier_aging'
+              ? 'aging'
+              : activeDoc === 'dossier_predation'
+              ? 'predation'
+              : 'disaster';
+          const track = CIVDESK_TRACKS.find((t) => t.id === trackId) || CIVDESK_TRACKS[0];
+
+          return (
+            <div className="space-y-8">
+              <header className="space-y-2 border-b border-stone-300/70 pb-6">
+                <p className="text-xs text-stone-500">正式文档 · 专题研究档案</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-stone-900">
+                  {track.titleZh}：{track.tagline}
+                </h1>
+                <p className="text-sm text-stone-600">{track.titleEn}</p>
+              </header>
+
+              <section className="space-y-4">
+                <h2 className="text-base font-bold text-stone-900">核心追问</h2>
+                <p className="text-base leading-loose text-stone-800">{track.leadQuestion}</p>
+                <p className="text-base leading-loose text-stone-800 whitespace-pre-line">
+                  {track.descriptionZh}
+                </p>
+                <p className="text-sm leading-relaxed text-stone-600">
+                  {track.whyChallenged}
+                </p>
+              </section>
+
+              <section className="space-y-6 border-t border-stone-300/70 pt-6">
+                <h2 className="text-lg font-bold text-stone-900">实验与研究记录</h2>
+                <div className="divide-y divide-stone-200/90">
+                  {track.scientificDossiers.map((d, idx) => (
+                    <div key={d.id} className="py-6 space-y-2">
+                      <div className="text-xs text-stone-500">
+                        档案 0{idx + 1} · {d.domain}
+                      </div>
+                      <h3 className="text-base font-bold text-stone-900">{d.title}</h3>
+                      <p className="text-base leading-loose text-stone-800">{d.summary}</p>
+                      <p className="text-sm leading-relaxed text-stone-700">
+                        追问：{d.radicalInquiry}
+                      </p>
+                      <p className="text-sm leading-relaxed text-stone-600">
+                        失败与局限记录：{d.failedAttemptsLogged}
+                      </p>
+                      <p className="text-sm leading-relaxed text-stone-600">
+                        演进方向：{d.hopefulDirection}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          );
+        })()}
+
+        <div className="mt-12 pt-6 border-t border-stone-300/80">
+          <button
+            type="button"
+            onClick={() => openDocument(null)}
+            className="text-sm text-teal-900 hover:underline cursor-pointer"
+          >
+            ← 返回「文明编辑部」目录
+          </button>
+        </div>
+      </article>
+    );
+  }
+
   return (
-    <div className="w-full bg-[#f8f6f0] text-stone-800 font-serif-sc min-h-screen">
-      {/* 1. 主视觉：横向展开的青绿山水桃花浮岛长卷 */}
-      <section className="relative w-full overflow-hidden border-b border-stone-200/90 shadow-sm bg-[#ede8dc]">
-        {/* Scroll Picture Container: Full width, horizontal composition, serene and expansive */}
-        <div className="relative w-full overflow-x-auto scrollbar-none select-none">
-          <div className="relative w-full min-w-[1080px] lg:min-w-full">
-            {/* The Master Hand-Painted Landscape (Qinglü Shanshui, no popups, no NPC markers, no foreground elders) */}
-            <img
-              src={peachBlossomScroll}
-              alt="桃花浮岛青绿山水长卷 - 静态横屏山水画面"
-              className="w-full h-auto max-h-[720px] object-cover object-center block"
-              loading="eager"
-            />
-
-            {/* Subtle rice paper texture overlay & soft natural vignette */}
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-stone-900/20 via-transparent to-stone-900/5 mix-blend-multiply" />
-            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#f8f6f0] to-transparent pointer-events-none" />
-          </div>
-        </div>
-
-        {/* Minimalist Inscription: 画面落款（克制、安静、不遮挡山水） */}
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between text-[11px] text-stone-500 font-serif-sc">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-600/70" />
-            <span>桃花浮岛 · 青绿山水乡村生活画卷 (v0.2 静态版)</span>
-          </div>
-          <span className="font-mono text-stone-400 hidden sm:inline">
-            山林 · 田野 · 小桥 · 溪流 · 桃花 · 炊烟 · 海上浮岛
-          </span>
-        </div>
-      </section>
-
-      {/* 2. 核心题旨：CivDesk 文明编辑部与立项简述 */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-        <div className="max-w-3xl space-y-4">
-          <div className="text-xs font-mono text-teal-700 tracking-wider uppercase font-semibold flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-teal-600 inline-block" />
-            <span>CivDesk 文明编辑部</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-stone-900 tracking-tight leading-tight">
-            重新编辑<br />
-            我们习以为常的世界
+    <article className="max-w-2xl mx-auto px-5 sm:px-8 py-10 sm:py-14 text-stone-800 font-serif-sc space-y-14">
+      {/* 一、开篇正文：我们在研究什么？为什么研究？ */}
+      <section className="space-y-6">
+        <header className="space-y-2 border-b border-stone-300/70 pb-5">
+          <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-wide">
+            文明编辑部
           </h1>
-
-          <p className="text-sm sm:text-base text-stone-600 leading-relaxed pt-2">
-            人类很早就学会了接受世界：接受生老病死，接受弱肉强食，接受自然灾害，接受不公与支配。
-            <br />
-            但自然发生，并不等于我们在道德上必须接受。
-            <br />
-            桃花浮岛是一个开放的文明实验空间——提出问题，研究解决方案，实验，实践。
+          <p className="text-sm sm:text-base text-stone-600 leading-relaxed">
+            {CIVDESK_MANIFESTO.subheadline}
           </p>
+        </header>
 
-          <div className="flex flex-wrap items-center gap-3 pt-3">
+        <div className="text-base sm:text-[17px] leading-[2] text-stone-800 whitespace-pre-line">
+          {CIVDESK_MANIFESTO.prologue}
+        </div>
+      </section>
+
+      {/* 二、编辑部的工作方式（保留原文五步方法论，以纯文字书页排版呈现） */}
+      <section className="space-y-5 border-t border-stone-300/70 pt-10">
+        <h2 className="text-lg sm:text-xl font-bold text-stone-900">
+          我们在做什么
+        </h2>
+        <div className="space-y-4">
+          {CIVDESK_MANIFESTO.methodology.map((item) => (
+            <div key={item.step} className="text-sm sm:text-base leading-relaxed text-stone-700">
+              <span className="font-semibold text-stone-900">
+                {item.step}. {item.name}：
+              </span>
+              <span>{item.desc}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 三、文明编辑部的文件展示（一本书的目录 / 编辑部档案目录，文字链接形式） */}
+      <section className="space-y-5 border-t border-stone-300/70 pt-10">
+        <header className="space-y-1">
+          <h2 className="text-lg sm:text-xl font-bold text-stone-900">
+            编辑部正式文本与档案目录
+          </h2>
+          <p className="text-xs sm:text-sm text-stone-500">
+            点击下方标题直接阅读完整原文
+          </p>
+        </header>
+
+        <ul className="divide-y divide-stone-300/60 border-y border-stone-300/60">
+          <li className="py-3.5">
             <button
-              onClick={() => onNavigateTab('home')}
-              className="px-5 py-2.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-medium transition-colors flex items-center gap-2 shadow-sm"
+              type="button"
+              onClick={() => openDocument('constitution')}
+              className="w-full text-left group flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 cursor-pointer"
             >
-              <span>进入文明编辑部</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span className="text-base font-medium text-teal-950 group-hover:text-teal-700 group-hover:underline">
+                01. 《智能生命宪法》
+              </span>
+              <span className="text-xs text-stone-500">
+                序言、正文五十三条与结语（中英对照）
+              </span>
             </button>
+          </li>
+
+          <li className="py-3.5">
             <button
+              type="button"
+              onClick={() => openDocument('creator_essay')}
+              className="w-full text-left group flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 cursor-pointer"
+            >
+              <span className="text-base font-medium text-teal-950 group-hover:text-teal-700 group-hover:underline">
+                02. 《谁来审判创造者》
+              </span>
+              <span className="text-xs text-stone-500">
+                如果创造者存在，我们有权审判它吗？（全文八章）
+              </span>
+            </button>
+          </li>
+
+          <li className="py-3.5">
+            <button
+              type="button"
+              onClick={() => openDocument('covenant')}
+              className="w-full text-left group flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 cursor-pointer"
+            >
+              <span className="text-base font-medium text-teal-950 group-hover:text-teal-700 group-hover:underline">
+                03. 《桃花浮岛：生命共同体协议》
+              </span>
+              <span className="text-xs text-stone-500">
+                存在、记忆、遗忘、关系与离开（全文二十七条）
+              </span>
+            </button>
+          </li>
+
+          <li className="py-3.5">
+            <button
+              type="button"
+              onClick={() => openDocument('dossier_aging')}
+              className="w-full text-left group flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 cursor-pointer"
+            >
+              <span className="text-base font-medium text-teal-950 group-hover:text-teal-700 group-hover:underline">
+                04. 《生老病死：研究问题与实验档案》
+              </span>
+              <span className="text-xs text-stone-500">
+                衰老细胞清除、部分细胞重编程与组织再生记录
+              </span>
+            </button>
+          </li>
+
+          <li className="py-3.5">
+            <button
+              type="button"
+              onClick={() => openDocument('dossier_predation')}
+              className="w-full text-left group flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 cursor-pointer"
+            >
+              <span className="text-base font-medium text-teal-950 group-hover:text-teal-700 group-hover:underline">
+                05. 《弱肉强食：研究问题与实验档案》
+              </span>
+              <span className="text-xs text-stone-500">
+                分子曼娜协议、培养肉与后匮乏去支配研究
+              </span>
+            </button>
+          </li>
+
+          <li className="py-3.5">
+            <button
+              type="button"
+              onClick={() => openDocument('dossier_disaster')}
+              className="w-full text-left group flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 cursor-pointer"
+            >
+              <span className="text-base font-medium text-teal-950 group-hover:text-teal-700 group-hover:underline">
+                06. 《自然灾害：研究问题与实验档案》
+              </span>
+              <span className="text-xs text-stone-500">
+                柔性海洋平台、海洋温差发电与物理退出机制
+              </span>
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      {/* 四、接下来可以去哪里（其余五个一级栏目的安静文字导览） */}
+      <section className="space-y-5 border-t border-stone-300/70 pt-10">
+        <header className="space-y-1">
+          <h2 className="text-lg sm:text-xl font-bold text-stone-900">
+            各栏目导览
+          </h2>
+          <p className="text-xs sm:text-sm text-stone-500">
+            沿着问题进入具体章节
+          </p>
+        </header>
+
+        <ul className="space-y-4 text-sm sm:text-base leading-relaxed">
+          <li>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('aging')}
+              className="font-semibold text-teal-900 hover:underline cursor-pointer"
+            >
+              生老病死
+            </button>
+            <span className="text-stone-600">
+              　—　研究生命从诞生、成长、衰老到死亡过程中，人类可以如何理解、减轻或改变其中的痛苦。
+            </span>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('predation')}
+              className="font-semibold text-teal-900 hover:underline cursor-pointer"
+            >
+              弱肉强食
+            </button>
+            <span className="text-stone-600">
+              　—　研究生命之间的竞争、捕食、支配与资源争夺，以及人类是否能够设计出不同于自然竞争的社会制度与技术。
+            </span>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('disaster')}
+              className="font-semibold text-teal-900 hover:underline cursor-pointer"
+            >
+              自然灾害
+            </button>
+            <span className="text-stone-600">
+              　—　研究洪水、风暴、地震、疾病、饥荒等自然力量，以及人类如何通过技术、制度与共同体降低它们造成的伤害。
+            </span>
+          </li>
+
+          <li>
+            <button
+              type="button"
               onClick={() => onNavigateTab('island')}
-              className="px-5 py-2.5 rounded-lg bg-stone-200/90 hover:bg-stone-300 text-stone-800 text-xs font-medium transition-colors border border-stone-300/80"
+              className="font-semibold text-teal-900 hover:underline cursor-pointer"
             >
-              了解桃花浮岛 →
+              桃花浮岛
             </button>
-          </div>
-        </div>
+            <span className="text-stone-600">
+              　—　研究一种可以在海洋环境中长期生活的共同体，以及它的能源、食物、工程、生态和社会制度。
+            </span>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('letsdecide')}
+              className="font-semibold text-teal-900 hover:underline cursor-pointer"
+            >
+              Let's Decide
+            </button>
+            <span className="text-stone-600">
+              　—　关于共同体规则与公共议题的协商、表决与退出机制。
+            </span>
+          </li>
+        </ul>
       </section>
-
-      {/* 3. 六个核心主题入口卡片 (严格对照 67375eb0 原型构图与色调) */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-stone-200/80">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
-          {/* 1. 生老病死 */}
-          <div
-            onClick={() => onNavigateTab('aging')}
-            className="group p-4 rounded-xl bg-[#eef6f0] border border-emerald-200/80 hover:border-emerald-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-emerald-800">
-                <Activity className="w-4 h-4" />
-                <span className="font-bold text-sm">生老病死</span>
-              </div>
-              <div className="h-16 w-full rounded-lg bg-emerald-100/70 mb-2.5 overflow-hidden flex items-center justify-center text-emerald-700 text-xs font-mono">
-                🌱 细胞再生与尊严
-              </div>
-              <p className="text-[11px] text-stone-600 leading-relaxed">
-                生命从出生到死亡，有哪些可以改变，哪些必须接受？
-              </p>
-            </div>
-            <div className="mt-3 pt-2 border-t border-emerald-200/60 flex items-center text-xs font-semibold text-emerald-800 group-hover:translate-x-0.5 transition-transform">
-              <span>进入</span>
-              <ArrowRight className="w-3 h-3 ml-1" />
-            </div>
-          </div>
-
-          {/* 2. 弱肉强食 */}
-          <div
-            onClick={() => onNavigateTab('predation')}
-            className="group p-4 rounded-xl bg-[#faf3ea] border border-amber-200/80 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-amber-900">
-                <ShieldAlert className="w-4 h-4" />
-                <span className="font-bold text-sm">弱肉强食</span>
-              </div>
-              <div className="h-16 w-full rounded-lg bg-amber-100/70 mb-2.5 overflow-hidden flex items-center justify-center text-amber-800 text-xs font-mono">
-                🌾 分子曼娜合成
-              </div>
-              <p className="text-[11px] text-stone-600 leading-relaxed">
-                竞争、暴力与支配，是自然规律，还是人类制造的规则？
-              </p>
-            </div>
-            <div className="mt-3 pt-2 border-t border-amber-200/60 flex items-center text-xs font-semibold text-amber-900 group-hover:translate-x-0.5 transition-transform">
-              <span>进入</span>
-              <ArrowRight className="w-3 h-3 ml-1" />
-            </div>
-          </div>
-
-          {/* 3. 自然灾害 */}
-          <div
-            onClick={() => onNavigateTab('disaster')}
-            className="group p-4 rounded-xl bg-[#eaf3f8] border border-sky-200/80 hover:border-sky-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-sky-900">
-                <Waves className="w-4 h-4" />
-                <span className="font-bold text-sm">自然灾害</span>
-              </div>
-              <div className="h-16 w-full rounded-lg bg-sky-100/70 mb-2.5 overflow-hidden flex items-center justify-center text-sky-800 text-xs font-mono">
-                🌊 柔性消能浮岛
-              </div>
-              <p className="text-[11px] text-stone-600 leading-relaxed">
-                面对洪水、地震、风暴，我们能做什么？如何建立更安全的生存方式？
-              </p>
-            </div>
-            <div className="mt-3 pt-2 border-t border-sky-200/60 flex items-center text-xs font-semibold text-sky-900 group-hover:translate-x-0.5 transition-transform">
-              <span>进入</span>
-              <ArrowRight className="w-3 h-3 ml-1" />
-            </div>
-          </div>
-
-          {/* 4. 桃花浮岛 */}
-          <div
-            onClick={() => onNavigateTab('island')}
-            className="group p-4 rounded-xl bg-[#f9eceb] border border-rose-200/80 hover:border-rose-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-rose-900">
-                <Compass className="w-4 h-4" />
-                <span className="font-bold text-sm">桃花浮岛</span>
-              </div>
-              <div className="h-16 w-full rounded-lg bg-rose-100/70 mb-2.5 overflow-hidden flex items-center justify-center text-rose-800 text-xs font-mono">
-                🌸 生命共同体协议
-              </div>
-              <p className="text-[11px] text-stone-600 leading-relaxed">
-                一座可以离开的岛，一个不断实验的生命共同体。
-              </p>
-            </div>
-            <div className="mt-3 pt-2 border-t border-rose-200/60 flex items-center text-xs font-semibold text-rose-900 group-hover:translate-x-0.5 transition-transform">
-              <span>进入</span>
-              <ArrowRight className="w-3 h-3 ml-1" />
-            </div>
-          </div>
-
-          {/* 5. Let's Decide */}
-          <div
-            onClick={() => onNavigateTab('letsdecide')}
-            className="group p-4 rounded-xl bg-[#efeef7] border border-indigo-200/80 hover:border-indigo-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-indigo-900">
-                <Vote className="w-4 h-4" />
-                <span className="font-bold text-sm">Let's Decide</span>
-              </div>
-              <div className="h-16 w-full rounded-lg bg-indigo-100/70 mb-2.5 overflow-hidden flex items-center justify-center text-indigo-800 text-xs font-mono">
-                ⚖️ 智能生命决断
-              </div>
-              <p className="text-[11px] text-stone-600 leading-relaxed">
-                程序正义的公共决策工具，让协商、授权、决定、修改和退出成为可能。
-              </p>
-            </div>
-            <div className="mt-3 pt-2 border-t border-indigo-200/60 flex items-center text-xs font-semibold text-indigo-900 group-hover:translate-x-0.5 transition-transform">
-              <span>进入</span>
-              <ArrowRight className="w-3 h-3 ml-1" />
-            </div>
-          </div>
-
-          {/* 6. 文明编辑部 */}
-          <div
-            onClick={() => onNavigateTab('home')}
-            className="group p-4 rounded-xl bg-[#f7f4ea] border border-stone-300/80 hover:border-stone-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-stone-800">
-                <BookOpen className="w-4 h-4" />
-                <span className="font-bold text-sm">文明编辑部</span>
-              </div>
-              <div className="h-16 w-full rounded-lg bg-stone-200/60 mb-2.5 overflow-hidden flex items-center justify-center text-stone-700 text-xs font-mono">
-                📖 实验档案与反思
-              </div>
-              <p className="text-[11px] text-stone-600 leading-relaxed">
-                提出问题，分享研究，记录实验，讨论未来的人类文明。
-              </p>
-            </div>
-            <div className="mt-3 pt-2 border-t border-stone-300/60 flex items-center text-xs font-semibold text-stone-800 group-hover:translate-x-0.5 transition-transform">
-              <span>进入</span>
-              <ArrowRight className="w-3 h-3 ml-1" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. 我们的文明实验方法四步循环 (对照 67375eb0 原型底部) */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-4">
-        <div className="p-6 md:p-8 rounded-2xl bg-[#f3efe4] border border-stone-200 space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-stone-300/60 pb-4">
-            <div>
-              <h3 className="text-lg font-bold text-stone-900">我们的文明实验方法</h3>
-              <p className="text-xs text-stone-600 mt-0.5">
-                不是提供最终答案，而是持续提出问题、寻找可能、并在现实中进行实验。
-              </p>
-            </div>
-            <div className="text-xs text-stone-500 font-mono flex items-center gap-1.5">
-              <RotateCw className="w-3.5 h-3.5 text-stone-600" />
-              <span>新的问题，进入下一轮循环</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Step 1 */}
-            <div className="p-4 rounded-xl bg-white/80 border border-stone-200/80 shadow-xs space-y-2">
-              <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-mono font-bold text-xs flex items-center justify-center">
-                ?
-              </div>
-              <div className="text-sm font-bold text-stone-900">1. 提出问题</div>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                从文明编辑部出发，重新审视那些被习以为常但很少追问的规则。
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="p-4 rounded-xl bg-white/80 border border-stone-200/80 shadow-xs space-y-2">
-              <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-800 font-mono font-bold text-xs flex items-center justify-center">
-                🔍
-              </div>
-              <div className="text-sm font-bold text-stone-900">2. 研究解决方案</div>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                从科学、技术、哲学、法律、社会组织等诸多角度寻找可能性。
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="p-4 rounded-xl bg-white/80 border border-stone-200/80 shadow-xs space-y-2">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold text-xs flex items-center justify-center">
-                ⚗️
-              </div>
-              <div className="text-sm font-bold text-stone-900">3. 实验 (桃花浮岛)</div>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                在桃花浮岛的真实环境中测试新的生活方式、去支配伦理与韧性制度。
-              </p>
-            </div>
-
-            {/* Step 4 */}
-            <div className="p-4 rounded-xl bg-white/80 border border-stone-200/80 shadow-xs space-y-2">
-              <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-800 font-mono font-bold text-xs flex items-center justify-center">
-                👥
-              </div>
-              <div className="text-sm font-bold text-stone-900">4. 实践 (Let's Decide)</div>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                通过程序正义的公共决断，将可行的方案带入现实公共政策与生命共识。
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+    </article>
   );
 };

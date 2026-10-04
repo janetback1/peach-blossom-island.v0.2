@@ -31,14 +31,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: #f4f0e6;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(120, 113, 108, 0.35);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(251, 146, 60, 0.4);
+  background: rgba(17, 94, 89, 0.55);
 }
 
 /* Subtle cosmic grid background */

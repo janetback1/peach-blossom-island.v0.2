@@ -119,18 +119,48 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
         <div className="max-w-3xl mx-auto px-4 sm:px-8 h-9 sm:h-10 flex items-center justify-between">
           {/* 左上角：单朵桃花胭脂印记 + 小而安静的站名 */}
           <button
-            type="button"
-            onClick={() => {
-              onSelectTab('home');
-              setMobileMenuOpen(false);
-            }}
-            className="group inline-flex items-center gap-2 py-1 text-left cursor-pointer"
-          >
-            <PeachBlossomImprint />
-            <span className="text-xs sm:text-[13px] tracking-[0.16em] text-[#4a443c] group-hover:text-[#2b2621] transition-colors">
-              桃花浮岛
-            </span>
-          </button>
+  type="button"
+  onClick={() => {
+    onSelectTab('home');
+    setMobileMenuOpen(false);
+  }}
+  className="flex items-center gap-2 text-lg sm:text-xl font-bold tracking-wide text-stone-900 hover:text-teal-900 transition-colors cursor-pointer text-left py-2"
+>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    className="shrink-0"
+  >
+    <g transform="rotate(-7 12 12)">
+      <path
+        d="M12 11.2
+           C8.8 8.8 7.2 5.2 9.1 3.4
+           C10.5 2.1 12 4.2 12 6.6
+           C12 4.2 13.5 2.1 14.9 3.4
+           C16.8 5.2 15.2 8.8 12 11.2
+           C15.2 8.8 18.8 7.2 20.6 9.1
+           C21.9 10.5 19.8 12 17.4 12
+           C19.8 12 21.9 13.5 20.6 14.9
+           C18.8 16.8 15.2 15.2 12 12
+           C15.2 15.2 16.8 18.8 14.9 20.6
+           C13.5 21.9 12 19.8 12 17.4
+           C12 19.8 10.5 21.9 9.1 20.6
+           C7.2 18.8 8.8 15.2 12 12
+           C8.8 15.2 5.2 16.8 3.4 14.9
+           C2.1 13.5 4.2 12 6.6 12
+           C4.2 12 2.1 10.5 3.4 9.1
+           C5.2 7.2 8.8 8.8 12 11.2Z"
+        fill="#B83A5A"
+        opacity="0.92"
+      />
+      <circle cx="12" cy="12" r="1.35" fill="#7E2945" />
+    </g>
+  </svg>
+
+  <span>桃花浮岛</span>
+</button>
 
           {/* 右侧（桌面端）：六个平等的一级菜单，安静如画卷下的一行小字 */}
           <nav className="hidden md:flex items-center gap-5 lg:gap-7" aria-label="主导航">

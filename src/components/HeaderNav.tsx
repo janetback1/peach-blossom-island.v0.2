@@ -5,6 +5,8 @@
 
 import React, { useState } from 'react';
 import peachBlossomScroll from '../assets/images/peach_blossom_scroll_v02_1791025529085.jpg';
+import scrollImgMain from '../assets/images/scroll_panorama_main_1791020909631.jpg';
+import riverOceanImg from '../assets/images/river_to_ocean_scroll_1791020942875.jpg';
 
 export type NavMenu = 'home' | 'aging' | 'predation' | 'disaster' | 'island' | 'letsdecide';
 
@@ -84,19 +86,32 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
 
   return (
     <div className="w-full font-serif-sc">
-      {/* 画心：完整一幅横向青绿山水长卷，严密贴合左右边缘，无拼接缝、无右侧白线 */}
+      {/* 画心：顶部窄幅青绿山水长卷 */}
       <div
-        className="relative w-full h-[12vh] sm:h-[14vh] min-h-[78px] max-h-[136px] overflow-hidden bg-[#9ba491] select-none"
+        className="relative w-full h-[12vh] sm:h-[14vh] min-h-[78px] max-h-[136px] overflow-hidden bg-[#f3f1ea] select-none"
         aria-label="桃花浮岛青绿山水长卷"
       >
-        <img
-          src={peachBlossomScroll}
-          alt="桃花浮岛青绿山水长卷"
-          className="block w-full h-full object-cover object-center"
-          loading="eager"
-        />
-        {/* 画心底部向宣纸装裱的自然过渡 */}
-        <div className="absolute inset-x-0 bottom-0 h-5 pointer-events-none bg-gradient-to-b from-transparent to-[#f1ece1]/45" />
+        <div className="w-full h-full flex items-center justify-center overflow-hidden">
+          <img
+            src={scrollImgMain}
+            alt=""
+            className="h-full w-auto max-w-none object-contain object-center shrink-0 opacity-95"
+            loading="eager"
+          />
+          <img
+            src={peachBlossomScroll}
+            alt="桃花浮岛山水画卷"
+            className="h-full w-auto max-w-none object-contain object-center shrink-0 opacity-95 -ml-px"
+            loading="eager"
+          />
+          <img
+            src={riverOceanImg}
+            alt=""
+            className="h-full w-auto max-w-none object-contain object-center shrink-0 opacity-95 -ml-px"
+            loading="eager"
+          />
+        </div>
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-stone-900/3 via-transparent to-[#f8f6f0]/10" />
       </div>
 
       {/* 装裱：画卷下方窄而克制的宣纸隔水导航 */}

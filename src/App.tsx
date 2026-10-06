@@ -10,9 +10,21 @@ import { TrackDetailView } from './components/TrackDetailView';
 import { FloatingIslandView } from './components/FloatingIslandView';
 import { LetsDecideView } from './components/LetsDecideView';
 import { ArticleEditorView } from './components/ArticleEditorView';
+import { AdminD1View } from './components/AdminD1View';
+import { syncD1PublishedArticles } from './content/loader';
+
+function checkIsAdminRoute(): boolean {
+  const { pathname, hash } = window.location;
+  return (
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/') ||
+    hash === '#/admin'
+  );
+}
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<NavMenu>('home');
+  const [currentTab, setCurrentTab] = useState<NavMenu>('island');
+  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(checkIsAdminRoute);
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(() => {
     return (
       window.location.hash === '#/editor' ||
@@ -22,13 +34,24 @@ export default function App() {
   const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
-    const handleHashChange = () => {
+    syncD1PublishedArticles().then(() => {
+      setRefreshTick((t) => t + 1);
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setIsAdminOpen(checkIsAdminRoute());
       if (window.location.hash === '#/editor') {
         setIsEditorOpen(true);
       }
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleRouteChange);
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('hashchange', handleRouteChange);
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
   const scrollToTop = () => {
@@ -36,17 +59,23 @@ export default function App() {
   };
 
   const handleSelectTab = (tab: NavMenu) => {
+    setIsAdminOpen(false);
     setIsEditorOpen(false);
-    if (window.location.hash === '#/editor') {
-      window.history.replaceState(null, '', window.location.pathname);
+    if (
+      window.location.pathname === '/admin' ||
+      window.location.pathname.startsWith('/admin/') ||
+      window.location.hash === '#/admin' ||
+      window.location.hash === '#/editor'
+    ) {
+      window.history.pushState(null, '', '/');
     }
     setCurrentTab(tab);
     scrollToTop();
   };
 
-  const openEditor = () => {
-    setIsEditorOpen(true);
-    window.location.hash = '#/editor';
+  const closeAdmin = () => {
+    setIsAdminOpen(false);
+    window.history.pushState(null, '', '/');
     scrollToTop();
   };
 
@@ -68,7 +97,12 @@ export default function App() {
 
       {/* 页面文稿内容区 */}
       <main className="flex-1 w-full" key={refreshTick}>
-        {isEditorOpen ? (
+        {isAdminOpen ? (
+          <AdminD1View
+            onBackToSite={closeAdmin}
+            onArticlesChanged={() => setRefreshTick((t) => t + 1)}
+          />
+        ) : isEditorOpen ? (
           <ArticleEditorView
             onClose={closeEditor}
             onSaved={() => setRefreshTick((t) => t + 1)}

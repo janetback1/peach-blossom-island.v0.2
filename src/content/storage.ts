@@ -40,13 +40,17 @@ export function parseMarkdownFile(rawText: string, filePath: string): ArticleDoc
 
   const match = rawText.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if (!match) {
+    const trimmedRaw = rawText.trim();
+    const headingMatch = trimmedRaw.match(/^#\s+([^\r\n]+)\r?\n+([\s\S]*)$/);
     return {
       path: normalizedPath,
       category,
-      title: normalizedPath.split('/').pop()?.replace(/\.md$/, '') || '未命名文章',
+      title: headingMatch
+        ? headingMatch[1].trim()
+        : normalizedPath.split('/').pop()?.replace(/\.md$/, '') || '未命名文章',
       description: '',
       status: 'published',
-      content: rawText.trim()
+      content: headingMatch ? headingMatch[2].trim() : trimmedRaw
     };
   }
 

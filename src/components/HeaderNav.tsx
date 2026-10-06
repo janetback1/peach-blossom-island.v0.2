@@ -19,55 +19,54 @@ interface HeaderNavProps {
 }
 
 /**
- * 左上角单朵桃花印记：
- * 鲜活桃花胭脂色（#B83A5A，红里带一点粉与一点紫），
- * 花瓣略微不规则、轻微倾斜、花蕊清楚，如指尖蘸胭脂在宣纸上轻轻印下的一朵活的花。
+ * 网站 Logo：传统的五瓣桃花图案（五个圆润桃花瓣 + 纤细花蕊），不含任何文字
  */
-const PeachBlossomImprint: React.FC = () => (
-  <svg
-    viewBox="0 0 28 28"
-    className="w-[17px] h-[17px] -rotate-[8deg] shrink-0 select-none"
-    aria-hidden="true"
-  >
-    {/* 五枚微不对称的桃花花瓣：鲜活桃花胭脂 #B83A5A */}
-    <g fill="#B83A5A" fillOpacity="0.86">
-      {/* 上瓣 */}
-      <path d="M13.7 2.8 C11.1 3.2, 9.7 6.7, 11.5 10.7 C12.4 12.1, 14.8 12.0, 15.8 10.4 C17.3 6.8, 16.1 2.7, 13.7 2.8 Z" />
-      {/* 右上瓣 */}
-      <path d="M23.8 9.7 C22.1 7.6, 18.3 8.0, 15.8 11.1 C14.9 12.5, 15.8 14.6, 17.8 14.9 C21.4 14.8, 25.0 11.8, 23.8 9.7 Z" />
-      {/* 右下瓣 */}
-      <path d="M20.7 21.3 C22.3 19.0, 20.4 15.6, 16.7 14.6 C15.1 14.3, 13.7 15.8, 14.2 17.7 C15.4 21.0, 19.0 23.0, 20.7 21.3 Z" />
-      {/* 左下瓣（手工轻印的自然微差） */}
-      <path d="M7.5 20.9 C9.4 22.5, 12.6 20.5, 13.6 17.2 C14.0 15.6, 12.6 14.2, 10.9 14.6 C7.6 15.5, 5.8 19.0, 7.5 20.9 Z" />
-      {/* 左上瓣 */}
-      <path d="M4.2 10.3 C3.3 12.5, 6.5 14.9, 10.3 14.7 C12.0 14.4, 12.8 12.4, 11.8 10.9 C9.4 8.1, 5.5 8.0, 4.2 10.3 Z" />
-    </g>
+const PeachBlossomLogo: React.FC = () => {
+  // 传统单枚桃花瓣路径（上端丰满圆润、微带桃花尖弧，向花心自然收拢）
+  const petalPath =
+    'M 12 10.7 C 9.3 8.8, 8.6 5.2, 10.3 3.2 C 11.0 2.4, 11.6 2.3, 12 2.7 C 12.4 2.3, 13.0 2.4, 13.7 3.2 C 15.4 5.2, 14.7 8.8, 12 10.7 Z';
 
-    {/* 花瓣内侧一点柔粉紫晕染，增加鲜活水润层次 */}
-    <circle cx="13.8" cy="13.6" r="3.4" fill="#D15476" fillOpacity="0.35" />
+  return (
+    <svg
+      width="21"
+      height="21"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="shrink-0 select-none"
+    >
+      <g transform="rotate(-8 12 12)">
+        {/* 五枚传统桃花瓣：72° 均匀环绕花心 */}
+        <g fill="#B83A5A" fillOpacity="0.9">
+          <path d={petalPath} />
+          <path d={petalPath} transform="rotate(72 12 12)" />
+          <path d={petalPath} transform="rotate(144 12 12)" />
+          <path d={petalPath} transform="rotate(216 12 12)" />
+          <path d={petalPath} transform="rotate(288 12 12)" />
+        </g>
 
-    {/* 纸面极细微的手工轻印留白 */}
-    <circle cx="15.0" cy="6.6" r="0.55" fill="#f1ece1" fillOpacity="0.45" />
-    <circle cx="19.1" cy="18.3" r="0.5" fill="#f1ece1" fillOpacity="0.4" />
+        {/* 花心浅胭脂晕染 */}
+        <circle cx="12" cy="12" r="2.2" fill="#D15476" fillOpacity="0.35" />
 
-    {/* 清楚纤细的花蕊：放射花丝与花药点 */}
-    <g stroke="#8A1E3D" strokeWidth="0.7" strokeLinecap="round" opacity="0.92">
-      <line x1="13.8" y1="13.6" x2="13.6" y2="9.9" />
-      <line x1="13.8" y1="13.6" x2="17.1" y2="11.9" />
-      <line x1="13.8" y1="13.6" x2="16.1" y2="16.2" />
-      <line x1="13.8" y1="13.6" x2="11.6" y2="16.2" />
-      <line x1="13.8" y1="13.6" x2="10.6" y2="12.1" />
-    </g>
-    <g fill="#7D1835">
-      <circle cx="13.8" cy="13.6" r="1.1" />
-      <circle cx="13.6" cy="9.6" r="0.7" />
-      <circle cx="17.4" cy="11.7" r="0.65" />
-      <circle cx="16.3" cy="16.5" r="0.7" />
-      <circle cx="11.4" cy="16.5" r="0.65" />
-      <circle cx="10.3" cy="12.0" r="0.7" />
-    </g>
-  </svg>
-);
+        {/* 桃花花丝与花药点 */}
+        <g stroke="#7E2945" strokeWidth="0.6" strokeLinecap="round" opacity="0.9">
+          <line x1="12" y1="12" x2="12" y2="9.3" />
+          <line x1="12" y1="12" x2="14.6" y2="11.2" />
+          <line x1="12" y1="12" x2="13.6" y2="14.2" />
+          <line x1="12" y1="12" x2="10.4" y2="14.2" />
+          <line x1="12" y1="12" x2="9.4" y2="11.2" />
+        </g>
+        <g fill="#7E2945">
+          <circle cx="12" cy="12" r="1.05" />
+          <circle cx="12" cy="9.1" r="0.55" />
+          <circle cx="14.8" cy="11.1" r="0.55" />
+          <circle cx="13.7" cy="14.4" r="0.55" />
+          <circle cx="10.3" cy="14.4" r="0.55" />
+          <circle cx="9.2" cy="11.1" r="0.55" />
+        </g>
+      </g>
+    </svg>
+  );
+};
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({
   currentTab,
@@ -76,12 +75,12 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuItems: { id: NavMenu; label: string }[] = [
-    { id: 'home', label: '文明编辑部' },
+    { id: 'island', label: '桃花浮岛' },
     { id: 'predation', label: '弱肉强食' },
     { id: 'aging', label: '生老病死' },
     { id: 'disaster', label: '自然灾害' },
-    { id: 'island', label: '桃花浮岛' },
-    { id: 'letsdecide', label: "Let's Decide" }
+    { id: 'letsdecide', label: "Let's Decide" },
+    { id: 'home', label: '文明编辑部' }
   ];
 
   return (
@@ -117,52 +116,20 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
       {/* 装裱：画卷下方窄而克制的宣纸隔水导航 */}
       <header className="w-full scroll-mounting-bar">
         <div className="max-w-3xl mx-auto px-4 sm:px-8 h-9 sm:h-10 flex items-center justify-between">
-          {/* 左上角：单朵桃花胭脂印记 + 小而安静的站名 */}
+          {/* 左上角：仅保留五瓣桃花图形 Logo */}
           <button
-  type="button"
-  onClick={() => {
-    onSelectTab('home');
-    setMobileMenuOpen(false);
-  }}
-  className="flex items-center gap-2 text-lg sm:text-xl font-bold tracking-wide text-stone-900 hover:text-teal-900 transition-colors cursor-pointer text-left py-2"
->
-  <svg
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-    className="shrink-0"
-  >
-    <g transform="rotate(-7 12 12)">
-      <path
-        d="M12 11.2
-           C8.8 8.8 7.2 5.2 9.1 3.4
-           C10.5 2.1 12 4.2 12 6.6
-           C12 4.2 13.5 2.1 14.9 3.4
-           C16.8 5.2 15.2 8.8 12 11.2
-           C15.2 8.8 18.8 7.2 20.6 9.1
-           C21.9 10.5 19.8 12 17.4 12
-           C19.8 12 21.9 13.5 20.6 14.9
-           C18.8 16.8 15.2 15.2 12 12
-           C15.2 15.2 16.8 18.8 14.9 20.6
-           C13.5 21.9 12 19.8 12 17.4
-           C12 19.8 10.5 21.9 9.1 20.6
-           C7.2 18.8 8.8 15.2 12 12
-           C8.8 15.2 5.2 16.8 3.4 14.9
-           C2.1 13.5 4.2 12 6.6 12
-           C4.2 12 2.1 10.5 3.4 9.1
-           C5.2 7.2 8.8 8.8 12 11.2Z"
-        fill="#B83A5A"
-        opacity="0.92"
-      />
-      <circle cx="12" cy="12" r="1.35" fill="#7E2945" />
-    </g>
-  </svg>
+            type="button"
+            onClick={() => {
+              onSelectTab('island');
+              setMobileMenuOpen(false);
+            }}
+            className="inline-flex items-center py-1 cursor-pointer"
+            aria-label="桃花浮岛首页"
+          >
+            <PeachBlossomLogo />
+          </button>
 
-  <span>桃花浮岛</span>
-</button>
-
-          {/* 右侧（桌面端）：六个平等的一级菜单，安静如画卷下的一行小字 */}
+          {/* 右侧（桌面端）：主导航（桃花浮岛 | …… | 文明编辑部） */}
           <nav className="hidden md:flex items-center gap-5 lg:gap-7" aria-label="主导航">
             {menuItems.map((item) => {
               const isActive = currentTab === item.id;
@@ -189,7 +156,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
             })}
           </nav>
 
-          {/* 右侧（移动端）：☰ 使用更淡的同系桃花胭脂色（桃花视觉权重 > 菜单） */}
+          {/* 右侧（移动端）：☰ */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen((prev) => !prev)}

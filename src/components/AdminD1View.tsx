@@ -1,0 +1,552 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { ContentCategory } from '../content/storage';
+import {
+  D1ArticleRecord,
+  getLocalPreviewD1Rows,
+  saveLocalPreviewD1Rows,
+  syncD1PublishedArticles
+} from '../content/loader';
+
+interface AdminD1ViewProps {
+  onBackToSite: () => void;
+  onArticlesChanged: () => void;
+}
+
+const CATEGORY_OPTIONS: { value: ContentCategory; label: string }[] = [
+  { value: 'floating-island', label: '桃花浮岛' },
+  { value: 'foodchain', label: '弱肉强食' },
+  { value: 'death', label: '生老病死' },
+  { value: 'disaster', label: '自然灾害' },
+  { value: 'lets-decide', label: "Let's Decide" },
+  { value: 'civdesk', label: '文明编辑部' }
+];
+
+function getCategoryLabel(cat: string): string {
+  return CATEGORY_OPTIONS.find((c) => c.value === cat)?.label || cat;
+}
+
+function nowFormatted(): string {
+  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+}
+
+export const AdminD1View: React.FC<AdminD1ViewProps> = ({
+  onBackToSite,
+  onArticlesChanged
+}) => {
+  const [articles, setArticles] = useState<D1ArticleRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [dbBound, setDbBound] = useState<boolean | null>(null);
+  const [accessEmail, setAccessEmail] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  // 编辑 / 新建模式状态
+  const [mode, setMode] = useState<'list' | 'form'>('list');
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState<ContentCategory>('foodchain');
+  const [content, setContent] = useState('');
+  const [published, setPublished] = useState<boolean>(true);
+  const [createdAt, setCreatedAt] = useState<string>('');
+  const [updatedAt, setUpdatedAt] = useState<string>('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+
+  const showTempNotice = (msg: string) => {
+    setNotice(msg);
+    window.setTimeout(() => {
+      setNotice((prev) => (prev === msg ? null : prev));
+    }, 3200);
+  };
+
+  const loadArticles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/admin/api/articles', {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store'
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = (await res.json()) as {
+          articles?: D1ArticleRecord[];
+          dbBound?: boolean;
+          accessEmail?: string | null;
+          error?: string;
+        };
+        if (res.status === 503 && data.dbBound === false) {
+          setDbBound(false);
+          setArticles(getLocalPreviewD1Rows());
+          setLoading(false);
+          return;
+        }
+        if (res.ok && Array.isArray(data.articles)) {
+          setDbBound(true);
+          setAccessEmail(data.accessEmail || null);
+          setArticles(data.articles);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {
+      // 本地预览环境回退
+    }
+
+    setDbBound(false);
+    setArticles(getLocalPreviewD1Rows());
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadArticles();
+  }, [loadArticles]);
+
+  const handleStartCreate = () => {
+    setEditingId(null);
+    setTitle('');
+    setCategory(
+      filterCategory !== 'all'
+        ? (filterCategory as ContentCategory)
+        : 'foodchain'
+    );
+    setContent('');
+    setPublished(true);
+    setCreatedAt('');
+    setUpdatedAt('');
+    setMode('form');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleStartEdit = (row: D1ArticleRecord) => {
+    setEditingId(row.id);
+    setTitle(row.title);
+    setCategory(row.category);
+    setContent(row.content);
+    setPublished(Boolean(row.published));
+    setCreatedAt(row.created_at);
+    setUpdatedAt(row.updated_at);
+    setMode('form');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSave = async (targetPublished?: boolean) => {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      showTempNotice('请填写文章标题');
+      return;
+    }
+
+    const finalPublished =
+      targetPublished !== undefined ? targetPublished : published;
+
+    setSaving(true);
+    try {
+      if (dbBound) {
+        const url =
+          editingId === null
+            ? '/admin/api/articles'
+            : `/admin/api/articles/${editingId}`;
+        const method = editingId === null ? 'POST' : 'PUT';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: trimmedTitle,
+            category,
+            content,
+            published: finalPublished ? 1 : 0
+          })
+        });
+        const data = (await res.json()) as {
+          error?: string;
+          article?: D1ArticleRecord;
+        };
+        if (!res.ok) {
+          showTempNotice(data.error || '保存失败');
+          setSaving(false);
+          return;
+        }
+      } else {
+        // 本地未绑定 D1 时的预览存储
+        const rows = getLocalPreviewD1Rows();
+        const now = nowFormatted();
+        if (editingId === null) {
+          const nextId =
+            rows.reduce((max, r) => (r.id > max ? r.id : max), 0) + 1;
+          rows.unshift({
+            id: nextId,
+            title: trimmedTitle,
+            category,
+            content,
+            published: finalPublished ? 1 : 0,
+            created_at: now,
+            updated_at: now
+          });
+        } else {
+          const idx = rows.findIndex((r) => r.id === editingId);
+          if (idx !== -1) {
+            rows[idx] = {
+              ...rows[idx],
+              title: trimmedTitle,
+              category,
+              content,
+              published: finalPublished ? 1 : 0,
+              updated_at: now
+            };
+          }
+        }
+        saveLocalPreviewD1Rows(rows);
+      }
+
+      await loadArticles();
+      await syncD1PublishedArticles();
+      onArticlesChanged();
+      setMode('list');
+      showTempNotice(editingId === null ? '已新建文章' : '已更新文章');
+    } catch {
+      showTempNotice('保存时发生网络错误');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTogglePublish = async (row: D1ArticleRecord) => {
+    const nextPub = row.published ? 0 : 1;
+    try {
+      if (dbBound) {
+        const res = await fetch(`/admin/api/articles/${row.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ published: nextPub })
+        });
+        if (!res.ok) {
+          showTempNotice('状态更新失败');
+          return;
+        }
+      } else {
+        const rows = getLocalPreviewD1Rows().map((r) =>
+          r.id === row.id
+            ? { ...r, published: nextPub, updated_at: nowFormatted() }
+            : r
+        );
+        saveLocalPreviewD1Rows(rows);
+      }
+      await loadArticles();
+      await syncD1PublishedArticles();
+      onArticlesChanged();
+      showTempNotice(nextPub ? '已发布文章' : '已下架文章');
+    } catch {
+      showTempNotice('操作失败');
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      if (dbBound) {
+        const res = await fetch(`/admin/api/articles/${id}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) {
+          showTempNotice('删除失败');
+          return;
+        }
+      } else {
+        const rows = getLocalPreviewD1Rows().filter((r) => r.id !== id);
+        saveLocalPreviewD1Rows(rows);
+      }
+      setConfirmDeleteId(null);
+      await loadArticles();
+      await syncD1PublishedArticles();
+      onArticlesChanged();
+      showTempNotice('已删除文章');
+    } catch {
+      showTempNotice('删除失败');
+    }
+  };
+
+  const filteredArticles =
+    filterCategory === 'all'
+      ? articles
+      : articles.filter((a) => a.category === filterCategory);
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-4 pb-16 text-[#3d3832] font-serif-sc space-y-5">
+      {/* 顶部栏（适配手机单手操作） */}
+      <div className="flex items-center justify-between gap-2 border-b border-[#dfd8c8] pb-3">
+        <div>
+          <h1 className="text-base sm:text-lg font-medium text-[#2c2824] tracking-wider">
+            文章管理后台
+          </h1>
+          <p className="text-xs text-[#787066] mt-0.5">
+            {dbBound
+              ? `Cloudflare D1 已连接${accessEmail ? ` · ${accessEmail}` : ''}`
+              : '当前未检测到 D1 绑定 (DB)，使用本地预览存储'}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {mode === 'list' && (
+            <button
+              type="button"
+              onClick={handleStartCreate}
+              className="min-h-[38px] px-3.5 py-1.5 text-xs sm:text-sm bg-[#2c2824] text-[#f6f2e9] hover:bg-[#3d3832] transition-colors cursor-pointer"
+            >
+              + 新建文章
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onBackToSite}
+            className="min-h-[38px] px-3 py-1.5 text-xs sm:text-sm border border-[#cfc6b4] text-[#4a443c] hover:text-[#26221e] transition-colors cursor-pointer"
+          >
+            返回前台
+          </button>
+        </div>
+      </div>
+
+      {notice && (
+        <div className="px-3.5 py-2 text-xs sm:text-sm bg-[#efe9da] border border-[#d5ccb8] text-[#2c2824]">
+          {notice}
+        </div>
+      )}
+
+      {mode === 'form' ? (
+        /* 新建 / 编辑文章表单（适配手机端大触控区域与 16px 字号防自动缩放） */
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm sm:text-base font-medium text-[#2c2824]">
+              {editingId === null ? '新建文章' : `编辑文章 #${editingId}`}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setMode('list')}
+              className="text-xs sm:text-sm text-[#6e665c] hover:text-[#26221e] py-1 cursor-pointer"
+            >
+              ← 返回列表
+            </button>
+          </div>
+
+          {editingId !== null && (
+            <div className="text-xs text-[#787066] space-y-0.5 bg-[#efe9dc]/60 px-3 py-2 border border-[#e2dac9]">
+              <div>创建时间：{createdAt || '-'}</div>
+              <div>更新时间：{updatedAt || '-'}</div>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="block text-xs sm:text-sm text-[#4a443c]">
+              文章标题（直接输入完整标题，如：好科学：XXXX 或 坏科学：XXXX）
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="请输入文章标题"
+              className="w-full min-h-[42px] px-3 py-2 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="block text-xs sm:text-sm text-[#4a443c]">
+                文章所属栏目
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as ContentCategory)}
+                className="w-full min-h-[42px] px-3 py-2 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+              >
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs sm:text-sm text-[#4a443c]">
+                发布状态
+              </label>
+              <select
+                value={published ? '1' : '0'}
+                onChange={(e) => setPublished(e.target.value === '1')}
+                className="w-full min-h-[42px] px-3 py-2 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+              >
+                <option value="1">已发布（前台可见）</option>
+                <option value="0">已下架（仅后台可见）</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs sm:text-sm text-[#4a443c]">
+              Markdown 正文
+            </label>
+            <textarea
+              rows={14}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="在此输入或粘贴 Markdown 正文..."
+              className="w-full px-3 py-2.5 text-base leading-relaxed bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 pt-2">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave(true)}
+              className="min-h-[42px] px-5 py-2 text-sm bg-[#2c2824] text-[#f6f2e9] hover:bg-[#3d3832] disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {saving ? '保存中...' : '保存并发布'}
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave(false)}
+              className="min-h-[42px] px-4 py-2 text-sm border border-[#cfc6b4] bg-[#f1ece1] text-[#3d3832] hover:text-[#26221e] disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              保存为下架
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => setMode('list')}
+              className="min-h-[42px] px-4 py-2 text-sm text-[#6e665c] hover:text-[#26221e] transition-colors cursor-pointer"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* 文章列表视图 */
+        <div className="space-y-4">
+          {/* 栏目筛选 */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <button
+              type="button"
+              onClick={() => setFilterCategory('all')}
+              className={`px-2.5 py-1 text-xs whitespace-nowrap border cursor-pointer transition-colors ${
+                filterCategory === 'all'
+                  ? 'border-[#2c2824] bg-[#2c2824] text-[#f6f2e9]'
+                  : 'border-[#dfd8c8] bg-[#f1ece1] text-[#635b52]'
+              }`}
+            >
+              全部 ({articles.length})
+            </button>
+            {CATEGORY_OPTIONS.map((opt) => {
+              const count = articles.filter(
+                (a) => a.category === opt.value
+              ).length;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFilterCategory(opt.value)}
+                  className={`px-2.5 py-1 text-xs whitespace-nowrap border cursor-pointer transition-colors ${
+                    filterCategory === opt.value
+                      ? 'border-[#2c2824] bg-[#2c2824] text-[#f6f2e9]'
+                      : 'border-[#dfd8c8] bg-[#f1ece1] text-[#635b52]'
+                  }`}
+                >
+                  {opt.label} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          {loading ? (
+            <div className="py-8 text-sm text-[#787066]">正在读取文章列表...</div>
+          ) : filteredArticles.length === 0 ? (
+            <div className="py-8 text-sm text-[#787066] border border-[#e2dac9] bg-[#f1ece1]/50 px-4">
+              当前栏目暂无 D1 后台文章。点击右上角「+ 新建文章」即可添加第一篇文章。
+            </div>
+          ) : (
+            <ul className="divide-y divide-[#dfd8c8] border border-[#dfd8c8] bg-[#faf7f0]">
+              {filteredArticles.map((row) => (
+                <li key={row.id} className="p-3.5 sm:p-4 space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[15px] sm:text-base font-medium text-[#2c2824] break-words">
+                        {row.title}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#6e665c]">
+                        <span>栏目：{getCategoryLabel(row.category)}</span>
+                        <span>
+                          状态：
+                          <strong
+                            className={
+                              row.published
+                                ? 'text-[#2c2824] font-medium'
+                                : 'text-[#8c8273] font-normal'
+                            }
+                          >
+                            {row.published ? '已发布' : '已下架'}
+                          </strong>
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#8a8175] space-y-0.5">
+                        <div>创建：{row.created_at} · 更新：{row.updated_at}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 手机端友好操作按钮 */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(row)}
+                      className="min-h-[34px] px-3 py-1 text-xs border border-[#cfc6b4] bg-[#f1ece1] text-[#2c2824] hover:bg-[#e6dfd1] cursor-pointer"
+                    >
+                      编辑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePublish(row)}
+                      className="min-h-[34px] px-3 py-1 text-xs border border-[#cfc6b4] bg-[#f6f2e9] text-[#4a443c] hover:text-[#26221e] cursor-pointer"
+                    >
+                      {row.published ? '下架' : '发布'}
+                    </button>
+
+                    {confirmDeleteId === row.id ? (
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(row.id)}
+                          className="min-h-[34px] px-3 py-1 text-xs bg-[#B83A5A] text-white cursor-pointer"
+                        >
+                          确认删除
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="min-h-[34px] px-2.5 py-1 text-xs text-[#6e665c] cursor-pointer"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(row.id)}
+                        className="min-h-[34px] px-3 py-1 text-xs text-[#8a8175] hover:text-[#B83A5A] cursor-pointer"
+                      >
+                        删除
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

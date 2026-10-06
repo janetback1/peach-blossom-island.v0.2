@@ -33,13 +33,9 @@ export const LetsDecideView: React.FC<LetsDecideViewProps> = () => {
   }
 
   return (
-    <article className="max-w-2xl mx-auto px-5 sm:px-8 pt-6 pb-14 sm:pt-9 sm:pb-16 text-[#3d3832] font-serif-sc space-y-6">
-      <h1 className="text-base sm:text-lg font-medium text-[#2c2824] tracking-wider">
-        Let's Decide
-      </h1>
-
+    <article className="max-w-2xl mx-auto px-5 sm:px-8 pt-3 pb-12 sm:pt-4 sm:pb-14 text-[#3d3832] font-serif-sc">
       {articles.length > 0 && (
-        <ul className="space-y-4 pt-2">
+        <ul className="space-y-2.5">
           {articles.map((doc) => (
             <li key={doc.path}>
               <button
@@ -48,7 +44,7 @@ export const LetsDecideView: React.FC<LetsDecideViewProps> = () => {
                   setActiveArticlePath(doc.path);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="text-left text-[15px] sm:text-base text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer"
+                className="text-left text-[13px] sm:text-sm text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer"
               >
                 {doc.title}
               </button>

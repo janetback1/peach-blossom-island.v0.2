@@ -35,24 +35,20 @@ export const RuralScrollHome: React.FC<RuralScrollHomeProps> = () => {
   }
 
   return (
-    <article className="max-w-2xl mx-auto px-5 sm:px-8 pt-6 pb-14 sm:pt-9 sm:pb-16 text-[#3d3832] font-serif-sc space-y-10">
-      {/* 小而明确的页面标题 + 文明编辑部正文 */}
-      <section className="space-y-5">
-        <h1 className="text-base sm:text-lg font-medium text-[#2c2824] tracking-wider">
-          {homeDoc?.title || '文明编辑部'}
-        </h1>
-
-        {homeDoc && (
-          <div className="text-[15px] sm:text-base leading-[2.05] text-[#3d3832] whitespace-pre-line">
+    <article className="max-w-2xl mx-auto px-5 sm:px-8 pt-3 pb-12 sm:pt-4 sm:pb-14 text-[#3d3832] font-serif-sc space-y-6">
+      {/* 文明编辑部正文（去除与顶部导航重复的「文明编辑部」标题） */}
+      {homeDoc && (
+        <section>
+          <div className="text-[14.5px] sm:text-[15px] leading-[2.0] text-[#3d3832] whitespace-pre-line">
             {homeDoc.content}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* 正式文章列表：只显示文章标题，标题本身即为入口 */}
+      {/* 正式文章列表：与顶部菜单使用统一字号 */}
       {publishedDocs.length > 0 && (
-        <section className="border-t border-[#ded7c7]/80 pt-7">
-          <ul className="space-y-4">
+        <section className="border-t border-[#ded7c7]/80 pt-4">
+          <ul className="space-y-2.5">
             {publishedDocs.map((doc) => (
               <li key={doc.path}>
                 <button
@@ -61,7 +57,7 @@ export const RuralScrollHome: React.FC<RuralScrollHomeProps> = () => {
                     setActiveArticlePath(doc.path);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="text-left text-[15px] sm:text-base text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer"
+                  className="text-left text-[13px] sm:text-sm text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer"
                 >
                   {doc.title}
                 </button>

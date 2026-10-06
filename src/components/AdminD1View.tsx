@@ -275,26 +275,41 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
       : articles.filter((a) => a.category === filterCategory);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-4 pb-16 text-[#3d3832] font-serif-sc space-y-5">
-      {/* 顶部栏（适配手机单手操作） */}
-      <div className="flex items-center justify-between gap-2 border-b border-[#dfd8c8] pb-3">
-        <div>
-          <h1 className="text-base sm:text-lg font-medium text-[#2c2824] tracking-wider">
-            文章管理后台
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-3 pb-14 text-[#3d3832] font-serif-sc space-y-3.5">
+      {/* 紧凑单行顶部栏：页面标题与 ← 返回列表 / 新建文章 同行排列，减少顶部垂直占用 */}
+      <div className="flex items-center justify-between gap-2 border-b border-[#dfd8c8] pb-2">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <h1 className="text-sm sm:text-[15px] font-medium text-[#2c2824] tracking-wider shrink-0">
+            {mode === 'form'
+              ? editingId === null
+                ? '新建文章'
+                : `编辑文章 #${editingId}`
+              : '文章管理后台'}
           </h1>
-          <p className="text-xs text-[#787066] mt-0.5">
-            {dbBound
-              ? `Cloudflare D1 已连接${accessEmail ? ` · ${accessEmail}` : ''}`
-              : '当前未检测到 D1 绑定 (DB)，使用本地预览存储'}
-          </p>
+          {mode === 'list' && (
+            <span className="text-[11px] text-[#787066] truncate">
+              {dbBound
+                ? `D1 已连接${accessEmail ? ` · ${accessEmail}` : ''}`
+                : '本地预览存储'}
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {mode === 'list' && (
+        <div className="flex items-center gap-2 shrink-0">
+          {mode === 'form' ? (
+            <button
+              type="button"
+              onClick={() => setMode('list')}
+              aria-label="返回列表"
+              className="min-w-[32px] min-h-[32px] px-2.5 py-1 text-sm text-[#4a443c] hover:text-[#26221e] border border-[#d5ccb8] bg-[#f1ece1] transition-colors cursor-pointer flex items-center justify-center"
+            >
+              ↩
+            </button>
+          ) : (
             <button
               type="button"
               onClick={handleStartCreate}
-              className="min-h-[38px] px-3.5 py-1.5 text-xs sm:text-sm bg-[#2c2824] text-[#f6f2e9] hover:bg-[#3d3832] transition-colors cursor-pointer"
+              className="min-h-[32px] px-3 py-1 text-xs bg-[#2c2824] text-[#f6f2e9] hover:bg-[#3d3832] transition-colors cursor-pointer"
             >
               + 新建文章
             </button>
@@ -302,7 +317,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
           <button
             type="button"
             onClick={onBackToSite}
-            className="min-h-[38px] px-3 py-1.5 text-xs sm:text-sm border border-[#cfc6b4] text-[#4a443c] hover:text-[#26221e] transition-colors cursor-pointer"
+            className="min-h-[32px] px-2.5 py-1 text-xs border border-[#cfc6b4] text-[#4a443c] hover:text-[#26221e] transition-colors cursor-pointer"
           >
             返回前台
           </button>
@@ -310,56 +325,43 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
       </div>
 
       {notice && (
-        <div className="px-3.5 py-2 text-xs sm:text-sm bg-[#efe9da] border border-[#d5ccb8] text-[#2c2824]">
+        <div className="px-3 py-1.5 text-xs bg-[#efe9da] border border-[#d5ccb8] text-[#2c2824]">
           {notice}
         </div>
       )}
 
       {mode === 'form' ? (
-        /* 新建 / 编辑文章表单（适配手机端大触控区域与 16px 字号防自动缩放） */
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm sm:text-base font-medium text-[#2c2824]">
-              {editingId === null ? '新建文章' : `编辑文章 #${editingId}`}
-            </h2>
-            <button
-              type="button"
-              onClick={() => setMode('list')}
-              className="text-xs sm:text-sm text-[#6e665c] hover:text-[#26221e] py-1 cursor-pointer"
-            >
-              ← 返回列表
-            </button>
-          </div>
-
+        /* 新建 / 编辑文章表单（紧凑布局，返回按钮已在同行右上方，不额外占据标题上方空间） */
+        <div className="space-y-3">
           {editingId !== null && (
-            <div className="text-xs text-[#787066] space-y-0.5 bg-[#efe9dc]/60 px-3 py-2 border border-[#e2dac9]">
-              <div>创建时间：{createdAt || '-'}</div>
-              <div>更新时间：{updatedAt || '-'}</div>
+            <div className="text-[11px] text-[#787066] flex flex-wrap gap-x-4 gap-y-0.5 bg-[#efe9dc]/60 px-2.5 py-1.5 border border-[#e2dac9]">
+              <span>创建：{createdAt || '-'}</span>
+              <span>更新：{updatedAt || '-'}</span>
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <label className="block text-xs sm:text-sm text-[#4a443c]">
-              文章标题（直接输入完整标题，如：好科学：XXXX 或 坏科学：XXXX）
+          <div className="space-y-1">
+            <label className="block text-xs text-[#4a443c]">
+              文章标题
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="请输入文章标题"
-              className="w-full min-h-[42px] px-3 py-2 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+              className="w-full min-h-[38px] px-3 py-1.5 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="block text-xs sm:text-sm text-[#4a443c]">
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-1">
+              <label className="block text-xs text-[#4a443c]">
                 文章所属栏目
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as ContentCategory)}
-                className="w-full min-h-[42px] px-3 py-2 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+                className="w-full min-h-[38px] px-2.5 py-1.5 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
               >
                 {CATEGORY_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -369,14 +371,14 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
               </select>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs sm:text-sm text-[#4a443c]">
+            <div className="space-y-1">
+              <label className="block text-xs text-[#4a443c]">
                 发布状态
               </label>
               <select
                 value={published ? '1' : '0'}
                 onChange={(e) => setPublished(e.target.value === '1')}
-                className="w-full min-h-[42px] px-3 py-2 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+                className="w-full min-h-[38px] px-2.5 py-1.5 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
               >
                 <option value="1">已发布（前台可见）</option>
                 <option value="0">已下架（仅后台可见）</option>
@@ -384,25 +386,25 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-xs sm:text-sm text-[#4a443c]">
+          <div className="space-y-1">
+            <label className="block text-xs text-[#4a443c]">
               Markdown 正文
             </label>
             <textarea
-              rows={14}
+              rows={13}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="在此输入或粘贴 Markdown 正文..."
-              className="w-full px-3 py-2.5 text-base leading-relaxed bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+              className="w-full px-3 py-2 text-base leading-relaxed bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 pt-2">
+          <div className="flex flex-wrap items-center gap-2 pt-1">
             <button
               type="button"
               disabled={saving}
               onClick={() => handleSave(true)}
-              className="min-h-[42px] px-5 py-2 text-sm bg-[#2c2824] text-[#f6f2e9] hover:bg-[#3d3832] disabled:opacity-50 transition-colors cursor-pointer"
+              className="min-h-[38px] px-4 py-1.5 text-xs sm:text-sm bg-[#2c2824] text-[#f6f2e9] hover:bg-[#3d3832] disabled:opacity-50 transition-colors cursor-pointer"
             >
               {saving ? '保存中...' : '保存并发布'}
             </button>
@@ -410,7 +412,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
               type="button"
               disabled={saving}
               onClick={() => handleSave(false)}
-              className="min-h-[42px] px-4 py-2 text-sm border border-[#cfc6b4] bg-[#f1ece1] text-[#3d3832] hover:text-[#26221e] disabled:opacity-50 transition-colors cursor-pointer"
+              className="min-h-[38px] px-3.5 py-1.5 text-xs sm:text-sm border border-[#cfc6b4] bg-[#f1ece1] text-[#3d3832] hover:text-[#26221e] disabled:opacity-50 transition-colors cursor-pointer"
             >
               保存为下架
             </button>
@@ -418,7 +420,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
               type="button"
               disabled={saving}
               onClick={() => setMode('list')}
-              className="min-h-[42px] px-4 py-2 text-sm text-[#6e665c] hover:text-[#26221e] transition-colors cursor-pointer"
+              className="min-h-[38px] px-3 py-1.5 text-xs sm:text-sm text-[#6e665c] hover:text-[#26221e] transition-colors cursor-pointer"
             >
               取消
             </button>
@@ -426,13 +428,13 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
         </div>
       ) : (
         /* 文章列表视图 */
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* 栏目筛选 */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             <button
               type="button"
               onClick={() => setFilterCategory('all')}
-              className={`px-2.5 py-1 text-xs whitespace-nowrap border cursor-pointer transition-colors ${
+              className={`px-2 py-0.5 text-xs whitespace-nowrap border cursor-pointer transition-colors ${
                 filterCategory === 'all'
                   ? 'border-[#2c2824] bg-[#2c2824] text-[#f6f2e9]'
                   : 'border-[#dfd8c8] bg-[#f1ece1] text-[#635b52]'
@@ -449,7 +451,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
                   key={opt.value}
                   type="button"
                   onClick={() => setFilterCategory(opt.value)}
-                  className={`px-2.5 py-1 text-xs whitespace-nowrap border cursor-pointer transition-colors ${
+                  className={`px-2 py-0.5 text-xs whitespace-nowrap border cursor-pointer transition-colors ${
                     filterCategory === opt.value
                       ? 'border-[#2c2824] bg-[#2c2824] text-[#f6f2e9]'
                       : 'border-[#dfd8c8] bg-[#f1ece1] text-[#635b52]'
@@ -462,21 +464,21 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
           </div>
 
           {loading ? (
-            <div className="py-8 text-sm text-[#787066]">正在读取文章列表...</div>
+            <div className="py-6 text-xs sm:text-sm text-[#787066]">正在读取文章列表...</div>
           ) : filteredArticles.length === 0 ? (
-            <div className="py-8 text-sm text-[#787066] border border-[#e2dac9] bg-[#f1ece1]/50 px-4">
+            <div className="py-6 text-xs sm:text-sm text-[#787066] border border-[#e2dac9] bg-[#f1ece1]/50 px-3.5">
               当前栏目暂无 D1 后台文章。点击右上角「+ 新建文章」即可添加第一篇文章。
             </div>
           ) : (
             <ul className="divide-y divide-[#dfd8c8] border border-[#dfd8c8] bg-[#faf7f0]">
               {filteredArticles.map((row) => (
-                <li key={row.id} className="p-3.5 sm:p-4 space-y-2.5">
+                <li key={row.id} className="p-3 sm:p-3.5 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <div className="text-[15px] sm:text-base font-medium text-[#2c2824] break-words">
+                    <div className="space-y-1 min-w-0">
+                      <div className="text-[13.5px] sm:text-[14.5px] font-medium text-[#2c2824] break-words">
                         {row.title}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#6e665c]">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-[#6e665c]">
                         <span>栏目：{getCategoryLabel(row.category)}</span>
                         <span>
                           状态：
@@ -490,26 +492,26 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
                             {row.published ? '已发布' : '已下架'}
                           </strong>
                         </span>
-                      </div>
-                      <div className="text-[11px] text-[#8a8175] space-y-0.5">
-                        <div>创建：{row.created_at} · 更新：{row.updated_at}</div>
+                        <span className="text-[#8a8175]">
+                          更新：{row.updated_at}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   {/* 手机端友好操作按钮 */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleStartEdit(row)}
-                      className="min-h-[34px] px-3 py-1 text-xs border border-[#cfc6b4] bg-[#f1ece1] text-[#2c2824] hover:bg-[#e6dfd1] cursor-pointer"
+                      className="min-h-[30px] px-2.5 py-0.5 text-xs border border-[#cfc6b4] bg-[#f1ece1] text-[#2c2824] hover:bg-[#e6dfd1] cursor-pointer"
                     >
                       编辑
                     </button>
                     <button
                       type="button"
                       onClick={() => handleTogglePublish(row)}
-                      className="min-h-[34px] px-3 py-1 text-xs border border-[#cfc6b4] bg-[#f6f2e9] text-[#4a443c] hover:text-[#26221e] cursor-pointer"
+                      className="min-h-[30px] px-2.5 py-0.5 text-xs border border-[#cfc6b4] bg-[#f6f2e9] text-[#4a443c] hover:text-[#26221e] cursor-pointer"
                     >
                       {row.published ? '下架' : '发布'}
                     </button>
@@ -519,14 +521,14 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleDelete(row.id)}
-                          className="min-h-[34px] px-3 py-1 text-xs bg-[#B83A5A] text-white cursor-pointer"
+                          className="min-h-[30px] px-2.5 py-0.5 text-xs bg-[#B83A5A] text-white cursor-pointer"
                         >
                           确认删除
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
-                          className="min-h-[34px] px-2.5 py-1 text-xs text-[#6e665c] cursor-pointer"
+                          className="min-h-[30px] px-2 py-0.5 text-xs text-[#6e665c] cursor-pointer"
                         >
                           取消
                         </button>
@@ -535,7 +537,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteId(row.id)}
-                        className="min-h-[34px] px-3 py-1 text-xs text-[#8a8175] hover:text-[#B83A5A] cursor-pointer"
+                        className="min-h-[30px] px-2.5 py-0.5 text-xs text-[#8a8175] hover:text-[#B83A5A] cursor-pointer"
                       >
                         删除
                       </button>

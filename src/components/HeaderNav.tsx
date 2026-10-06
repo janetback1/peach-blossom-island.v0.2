@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import peachBlossomScroll from '../assets/images/peach_blossom_scroll_v02_1791025529085.jpg';
 import scrollImgMain from '../assets/images/scroll_panorama_main_1791020909631.jpg';
 import riverOceanImg from '../assets/images/river_to_ocean_scroll_1791020942875.jpg';
@@ -19,20 +19,19 @@ interface HeaderNavProps {
 }
 
 /**
- * 网站 Logo：传统的五瓣桃花图案（五个圆润桃花瓣 + 纤细花蕊），不含任何文字
+ * 网站 Logo：传统的五瓣桃花图案（适当缩小尺寸以压缩横向占用，不含任何文字）
  */
 const PeachBlossomLogo: React.FC = () => {
-  // 传统单枚桃花瓣路径（上端丰满圆润、微带桃花尖弧，向花心自然收拢）
   const petalPath =
     'M 12 10.7 C 9.3 8.8, 8.6 5.2, 10.3 3.2 C 11.0 2.4, 11.6 2.3, 12 2.7 C 12.4 2.3, 13.0 2.4, 13.7 3.2 C 15.4 5.2, 14.7 8.8, 12 10.7 Z';
 
   return (
     <svg
-      width="21"
-      height="21"
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className="shrink-0 select-none"
+      className="shrink-0 select-none block"
     >
       <g transform="rotate(-8 12 12)">
         {/* 五枚传统桃花瓣：72° 均匀环绕花心 */}
@@ -72,12 +71,9 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   currentTab,
   onSelectTab
 }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const menuItems: { id: NavMenu; label: string }[] = [
     { id: 'island', label: '桃花浮岛' },
     { id: 'predation', label: '弱肉强食' },
-    { id: 'aging', label: '生老病死' },
     { id: 'disaster', label: '自然灾害' },
     { id: 'letsdecide', label: "Let's Decide" },
     { id: 'home', label: '文明编辑部' }
@@ -87,7 +83,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
     <div className="w-full font-serif-sc">
       {/* 画心：顶部窄幅青绿山水长卷 */}
       <div
-        className="relative w-full h-[12vh] sm:h-[14vh] min-h-[78px] max-h-[136px] overflow-hidden bg-[#f3f1ea] select-none"
+        className="relative w-full h-[11vh] sm:h-[13vh] min-h-[70px] max-h-[124px] overflow-hidden bg-[#f3f1ea] select-none"
         aria-label="桃花浮岛青绿山水长卷"
       >
         <div className="w-full h-full flex items-center justify-center overflow-hidden">
@@ -113,92 +109,48 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-stone-900/3 via-transparent to-[#f8f6f0]/10" />
       </div>
 
-      {/* 装裱：画卷下方窄而克制的宣纸隔水导航 */}
+      {/* 装裱：紧凑单行导航 [桃花 Logo] 桃花浮岛 弱肉强食 自然灾害 Let's Decide 文明编辑部 */}
       <header className="w-full scroll-mounting-bar">
-        <div className="max-w-3xl mx-auto px-4 sm:px-8 h-9 sm:h-10 flex items-center justify-between">
-          {/* 左上角：仅保留五瓣桃花图形 Logo */}
+        <div className="max-w-2xl mx-auto px-3 sm:px-8 h-8 sm:h-9 flex items-center justify-start gap-2 sm:gap-3.5">
+          {/* 左侧：紧凑五瓣桃花图形 Logo */}
           <button
             type="button"
-            onClick={() => {
-              onSelectTab('island');
-              setMobileMenuOpen(false);
-            }}
-            className="inline-flex items-center py-1 cursor-pointer"
+            onClick={() => onSelectTab('island')}
+            className="inline-flex items-center justify-center p-0.5 cursor-pointer shrink-0"
             aria-label="桃花浮岛首页"
           >
             <PeachBlossomLogo />
           </button>
 
-          {/* 右侧（桌面端）：主导航（桃花浮岛 | …… | 文明编辑部） */}
-          <nav className="hidden md:flex items-center gap-5 lg:gap-7" aria-label="主导航">
+          {/* 主导航：单行紧凑排列，整体向右偏移约半个字符，Let's Decide 单独缩小 1~2 号字 */}
+          <nav
+            className="ml-[0.5em] flex items-center gap-2.5 sm:gap-4 whitespace-nowrap"
+            aria-label="主导航"
+          >
             {menuItems.map((item) => {
               const isActive = currentTab === item.id;
+              const isLetsDecide = item.id === 'letsdecide';
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => onSelectTab(item.id)}
-                  className={`relative py-1.5 text-xs sm:text-[13px] tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center leading-none transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    isLetsDecide
+                      ? 'text-[10px] sm:text-[11px] tracking-tight'
+                      : 'text-xs sm:text-[13px] tracking-normal sm:tracking-wide'
+                  } ${
                     isActive
-                      ? 'text-[#26221e] font-medium'
-                      : 'text-[#6e665c] hover:text-[#2e2924]'
+                      ? 'text-[#B83A5A] font-semibold'
+                      : 'text-[#6e665c] font-normal hover:text-[#2e2924]'
                   }`}
                 >
-                  <span>{item.label}</span>
-                  {isActive && (
-                    <span
-                      className="block mx-auto mt-0.5 w-1 h-1 rounded-full bg-[#B83A5A]/80"
-                      aria-hidden="true"
-                    />
-                  )}
+                  {item.label}
                 </button>
               );
             })}
           </nav>
-
-          {/* 右侧（移动端）：☰ */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className="md:hidden min-w-[40px] min-h-[36px] -mr-1.5 flex items-center justify-center text-[#B83A5A]/50 hover:text-[#B83A5A]/75 text-sm cursor-pointer transition-colors"
-            aria-expanded={mobileMenuOpen}
-            aria-label={mobileMenuOpen ? '收起菜单' : '展开菜单'}
-          >
-            {mobileMenuOpen ? '✕' : '☰'}
-          </button>
         </div>
-
-        {/* 移动端菜单展开：素雅宣纸列表 */}
-        {mobileMenuOpen && (
-          <nav
-            className="md:hidden border-t border-[#dfd8c8]/70 bg-[#f4efe4] px-5 py-1.5 divide-y divide-[#e6dfd1]/70"
-            aria-label="移动端主导航"
-          >
-            {menuItems.map((item) => {
-              const isActive = currentTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    onSelectTab(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full py-2.5 text-left text-[13px] tracking-wider flex items-center justify-between transition-colors ${
-                    isActive
-                      ? 'text-[#26221e] font-medium'
-                      : 'text-[#635b52] hover:text-[#26221e]'
-                  }`}
-                >
-                  <span>{item.label}</span>
-                  {isActive && (
-                    <span className="w-1 h-1 rounded-full bg-[#B83A5A]/75" aria-hidden="true" />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        )}
       </header>
     </div>
   );

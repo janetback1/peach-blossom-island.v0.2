@@ -80,24 +80,24 @@ export const ArticleEditorView: React.FC<ArticleEditorViewProps> = ({
   });
 
   return (
-    <div className="max-w-2xl mx-auto px-5 sm:px-8 py-10 sm:py-14 text-stone-800 font-serif-sc space-y-8">
-      {onClose && (
-        <div className="pb-4 border-b border-stone-300/80">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm text-teal-900 hover:underline cursor-pointer"
-          >
-            ← 返回网站
-          </button>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-bold text-stone-900">
-            文件路径
-          </label>
+    <div className="max-w-2xl mx-auto px-5 sm:px-8 pt-3 pb-12 text-stone-800 font-serif-sc space-y-5">
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <label className="block text-xs sm:text-sm font-bold text-stone-900">
+              文件路径
+            </label>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="返回列表"
+                className="min-w-[32px] min-h-[32px] flex items-center justify-center text-sm text-teal-900 hover:underline cursor-pointer shrink-0"
+              >
+                ↩
+              </button>
+            )}
+          </div>
           <input
             type="text"
             value={filePath}

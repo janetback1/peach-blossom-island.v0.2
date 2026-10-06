@@ -17,18 +17,18 @@ interface TrackDetailViewProps {
 
 const TRACK_CONFIG: Record<
   'aging' | 'predation' | 'disaster',
-  { title: string; category: ContentCategory }
+  { category: ContentCategory }
 > = {
-  predation: { title: '弱肉强食', category: 'foodchain' },
-  aging: { title: '生老病死', category: 'death' },
-  disaster: { title: '自然灾害', category: 'disaster' }
+  predation: { category: 'foodchain' },
+  aging: { category: 'death' },
+  disaster: { category: 'disaster' }
 };
 
 export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
   trackId
 }) => {
   const [activeArticlePath, setActiveArticlePath] = useState<string | null>(null);
-  const { title, category } = TRACK_CONFIG[trackId];
+  const { category } = TRACK_CONFIG[trackId];
   const articles = getPublishedArticlesByCategory(category);
 
   if (activeArticlePath) {
@@ -48,11 +48,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
   }
 
   return (
-    <article className="max-w-2xl mx-auto px-5 sm:px-8 pt-3.5 pb-12 sm:pt-4 sm:pb-14 text-[#3d3832] font-serif-sc space-y-3">
-      <h1 className="text-base sm:text-lg font-medium text-[#2c2824] tracking-wider">
-        {title}
-      </h1>
-
+    <article className="max-w-2xl mx-auto px-5 sm:px-8 pt-3 pb-12 sm:pt-4 sm:pb-14 text-[#3d3832] font-serif-sc">
       {articles.length > 0 && (
         <ul className="space-y-2.5">
           {articles.map((doc) => (
@@ -63,7 +59,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   setActiveArticlePath(doc.path);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="text-left text-[15px] sm:text-base text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer"
+                className="text-left text-[13px] sm:text-sm text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer"
               >
                 {doc.title}
               </button>

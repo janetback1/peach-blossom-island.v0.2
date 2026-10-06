@@ -14,13 +14,18 @@ export type ContentCategory =
   | 'lets-decide';
 
 export interface ArticleDocument {
-  /** 相对项目根路径，例如 content/zh/civdesk/test.md */
+  /** 相对项目根路径，例如 content/zh/civdesk/test.md 或 d1/1 */
   path: string;
   category: ContentCategory;
   title: string;
   description: string;
+  /** 文章简介（空字符串表示无简介，有文字表示显示简介） */
+  excerpt?: string;
+  /** 是否置顶 */
+  pinned?: boolean;
   status: ArticleStatus;
   content: string;
+  createdAt?: string;
   updatedAt?: string;
 }
 
@@ -49,6 +54,8 @@ export function parseMarkdownFile(rawText: string, filePath: string): ArticleDoc
         ? headingMatch[1].trim()
         : normalizedPath.split('/').pop()?.replace(/\.md$/, '') || '未命名文章',
       description: '',
+      excerpt: '',
+      pinned: false,
       status: 'published',
       content: headingMatch ? headingMatch[2].trim() : trimmedRaw
     };
@@ -83,6 +90,8 @@ export function parseMarkdownFile(rawText: string, filePath: string): ArticleDoc
     category,
     title: title || normalizedPath.split('/').pop()?.replace(/\.md$/, '') || '未命名文章',
     description,
+    excerpt: description,
+    pinned: false,
     status,
     content: body
   };
@@ -159,6 +168,8 @@ export const articleStorage = {
       category: extractCategoryFromPath(normalizedPath),
       title: input.title.trim(),
       description: input.description.trim(),
+      excerpt: input.description.trim(),
+      pinned: false,
       status: input.status,
       content: input.content,
       updatedAt: new Date().toISOString()

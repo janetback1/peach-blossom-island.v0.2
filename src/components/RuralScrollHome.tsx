@@ -45,7 +45,7 @@ export const RuralScrollHome: React.FC<RuralScrollHomeProps> = () => {
         </section>
       )}
 
-      {/* 正式文章列表：与顶部菜单使用统一字号 */}
+      {/* 正式文章列表：与顶部菜单使用统一字号，若文章有简介则显示在标题下方 */}
       {publishedDocs.length > 0 && (
         <section className="border-t border-[#ded7c7]/80 pt-4">
           <ul className="space-y-2.5">
@@ -61,6 +61,11 @@ export const RuralScrollHome: React.FC<RuralScrollHomeProps> = () => {
                 >
                   {doc.title}
                 </button>
+                {doc.excerpt && doc.excerpt.trim() !== '' && (
+                  <p className="mt-0.5 text-xs text-[#6e665c] leading-relaxed">
+                    {doc.excerpt}
+                  </p>
+                )}
               </li>
             ))}
           </ul>

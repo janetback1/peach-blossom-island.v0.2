@@ -49,6 +49,11 @@ export const FloatingIslandView: React.FC<FloatingIslandViewProps> = () => {
               >
                 {doc.title}
               </button>
+              {doc.excerpt && doc.excerpt.trim() !== '' && (
+                <p className="mt-0.5 text-xs text-[#6e665c] leading-relaxed">
+                  {doc.excerpt}
+                </p>
+              )}
             </li>
           ))}
         </ul>

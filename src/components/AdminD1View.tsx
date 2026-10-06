@@ -51,8 +51,10 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<ContentCategory>('foodchain');
+  const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState('');
   const [published, setPublished] = useState<boolean>(true);
+  const [pinned, setPinned] = useState<boolean>(false);
   const [createdAt, setCreatedAt] = useState<string>('');
   const [updatedAt, setUpdatedAt] = useState<string>('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -88,7 +90,13 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
         if (res.ok && Array.isArray(data.articles)) {
           setDbBound(true);
           setAccessEmail(data.accessEmail || null);
-          setArticles(data.articles);
+          setArticles(
+            data.articles.map((r) => ({
+              ...r,
+              excerpt: r.excerpt ?? '',
+              pinned: r.pinned ? 1 : 0
+            }))
+          );
           setLoading(false);
           return;
         }
@@ -114,8 +122,10 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
         ? (filterCategory as ContentCategory)
         : 'foodchain'
     );
+    setExcerpt('');
     setContent('');
     setPublished(true);
+    setPinned(false);
     setCreatedAt('');
     setUpdatedAt('');
     setMode('form');
@@ -126,8 +136,10 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
     setEditingId(row.id);
     setTitle(row.title);
     setCategory(row.category);
+    setExcerpt(row.excerpt ?? '');
     setContent(row.content);
     setPublished(Boolean(row.published));
+    setPinned(Boolean(row.pinned));
     setCreatedAt(row.created_at);
     setUpdatedAt(row.updated_at);
     setMode('form');
@@ -143,6 +155,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
 
     const finalPublished =
       targetPublished !== undefined ? targetPublished : published;
+    const trimmedExcerpt = excerpt.trim();
 
     setSaving(true);
     try {
@@ -158,8 +171,10 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
           body: JSON.stringify({
             title: trimmedTitle,
             category,
+            excerpt: trimmedExcerpt,
             content,
-            published: finalPublished ? 1 : 0
+            published: finalPublished ? 1 : 0,
+            pinned: pinned ? 1 : 0
           })
         });
         const data = (await res.json()) as {
@@ -182,8 +197,10 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
             id: nextId,
             title: trimmedTitle,
             category,
+            excerpt: trimmedExcerpt,
             content,
             published: finalPublished ? 1 : 0,
+            pinned: pinned ? 1 : 0,
             created_at: now,
             updated_at: now
           });
@@ -194,8 +211,10 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
               ...rows[idx],
               title: trimmedTitle,
               category,
+              excerpt: trimmedExcerpt,
               content,
               published: finalPublished ? 1 : 0,
+              pinned: pinned ? 1 : 0,
               updated_at: now
             };
           }
@@ -245,6 +264,36 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
     }
   };
 
+  const handleTogglePin = async (row: D1ArticleRecord) => {
+    const nextPin = row.pinned ? 0 : 1;
+    try {
+      if (dbBound) {
+        const res = await fetch(`/admin/api/articles/${row.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pinned: nextPin })
+        });
+        if (!res.ok) {
+          showTempNotice('置顶状态更新失败');
+          return;
+        }
+      } else {
+        const rows = getLocalPreviewD1Rows().map((r) =>
+          r.id === row.id
+            ? { ...r, pinned: nextPin, updated_at: nowFormatted() }
+            : r
+        );
+        saveLocalPreviewD1Rows(rows);
+      }
+      await loadArticles();
+      await syncD1PublishedArticles();
+      onArticlesChanged();
+      showTempNotice(nextPin ? '已设为置顶' : '已取消置顶');
+    } catch {
+      showTempNotice('操作失败');
+    }
+  };
+
   const handleDelete = async (id: number) => {
     try {
       if (dbBound) {
@@ -276,7 +325,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-3 pb-14 text-[#3d3832] font-serif-sc space-y-3.5">
-      {/* 紧凑单行顶部栏：页面标题与 ← 返回列表 / 新建文章 同行排列，减少顶部垂直占用 */}
+      {/* 紧凑单行顶部栏：页面标题与 ↩ 返回列表 / 新建文章 同行排列 */}
       <div className="flex items-center justify-between gap-2 border-b border-[#dfd8c8] pb-2">
         <div className="flex items-baseline gap-2 min-w-0">
           <h1 className="text-sm sm:text-[15px] font-medium text-[#2c2824] tracking-wider shrink-0">
@@ -331,7 +380,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
       )}
 
       {mode === 'form' ? (
-        /* 新建 / 编辑文章表单（紧凑布局，返回按钮已在同行右上方，不额外占据标题上方空间） */
+        /* 新建 / 编辑文章表单 */
         <div className="space-y-3">
           {editingId !== null && (
             <div className="text-[11px] text-[#787066] flex flex-wrap gap-x-4 gap-y-0.5 bg-[#efe9dc]/60 px-2.5 py-1.5 border border-[#e2dac9]">
@@ -353,7 +402,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div className="space-y-1">
               <label className="block text-xs text-[#4a443c]">
                 文章所属栏目
@@ -384,6 +433,33 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
                 <option value="0">已下架（仅后台可见）</option>
               </select>
             </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs text-[#4a443c]">
+                置顶状态
+              </label>
+              <select
+                value={pinned ? '1' : '0'}
+                onChange={(e) => setPinned(e.target.value === '1')}
+                className="w-full min-h-[38px] px-2.5 py-1.5 text-base bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+              >
+                <option value="0">普通（按时间排列）</option>
+                <option value="1">置顶（排在栏目最前）</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-xs text-[#4a443c]">
+              文章简介（可选，留空则不显示简介）
+            </label>
+            <textarea
+              rows={2}
+              value={excerpt}
+              onChange={(e) => setExcerpt(e.target.value)}
+              placeholder="可选：输入简短文章简介，留空则前台列表仅显示标题..."
+              className="w-full px-3 py-1.5 text-sm leading-relaxed bg-[#faf7f0] border border-[#d5ccb8] text-[#26221e] focus:outline-none focus:border-[#8c8273]"
+            />
           </div>
 
           <div className="space-y-1">
@@ -467,7 +543,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
             <div className="py-6 text-xs sm:text-sm text-[#787066]">正在读取文章列表...</div>
           ) : filteredArticles.length === 0 ? (
             <div className="py-6 text-xs sm:text-sm text-[#787066] border border-[#e2dac9] bg-[#f1ece1]/50 px-3.5">
-              当前栏目暂无 D1 后台文章。点击右上角「+ 新建文章」即可添加第一篇文章。
+              当前栏目暂无文章。点击右上角「+ 新建文章」即可添加。
             </div>
           ) : (
             <ul className="divide-y divide-[#dfd8c8] border border-[#dfd8c8] bg-[#faf7f0]">
@@ -475,9 +551,21 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
                 <li key={row.id} className="p-3 sm:p-3.5 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1 min-w-0">
-                      <div className="text-[13.5px] sm:text-[14.5px] font-medium text-[#2c2824] break-words">
-                        {row.title}
+                      <div className="text-[13.5px] sm:text-[14.5px] font-medium text-[#2c2824] break-words flex flex-wrap items-center gap-1.5">
+                        {Boolean(row.pinned) && (
+                          <span className="text-[11px] font-semibold text-[#B83A5A] shrink-0">
+                            [置顶]
+                          </span>
+                        )}
+                        <span>{row.title}</span>
                       </div>
+
+                      {row.excerpt && row.excerpt.trim() !== '' && (
+                        <p className="text-xs text-[#6e665c] leading-relaxed break-words">
+                          {row.excerpt}
+                        </p>
+                      )}
+
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-[#6e665c]">
                         <span>栏目：{getCategoryLabel(row.category)}</span>
                         <span>
@@ -499,7 +587,7 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
                     </div>
                   </div>
 
-                  {/* 手机端友好操作按钮 */}
+                  {/* 手机端友好操作按钮：编辑 / 发布或下架 / 置顶或取消置顶 / 删除 */}
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
@@ -514,6 +602,17 @@ export const AdminD1View: React.FC<AdminD1ViewProps> = ({
                       className="min-h-[30px] px-2.5 py-0.5 text-xs border border-[#cfc6b4] bg-[#f6f2e9] text-[#4a443c] hover:text-[#26221e] cursor-pointer"
                     >
                       {row.published ? '下架' : '发布'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePin(row)}
+                      className={`min-h-[30px] px-2.5 py-0.5 text-xs border cursor-pointer ${
+                        row.pinned
+                          ? 'border-[#B83A5A]/50 bg-[#f6f2e9] text-[#B83A5A]'
+                          : 'border-[#cfc6b4] bg-[#f6f2e9] text-[#4a443c] hover:text-[#26221e]'
+                      }`}
+                    >
+                      {row.pinned ? '取消置顶' : '置顶'}
                     </button>
 
                     {confirmDeleteId === row.id ? (

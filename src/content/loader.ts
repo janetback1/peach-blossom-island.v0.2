@@ -9,21 +9,28 @@ import {
   articleStorage,
   parseMarkdownFile
 } from './storage';
+import {
+  DEFAULT_SEED_ARTICLES,
+  normalizeTitleForMatch
+} from './defaultArticles';
 
 /**
- * D1 数据库文章记录结构
+ * D1 数据库文章记录结构（含简介 excerpt 与置顶 pinned）
  */
 export interface D1ArticleRecord {
   id: number;
   title: string;
   category: ContentCategory;
+  excerpt: string;
   content: string;
   published: number;
+  pinned: number;
   created_at: string;
   updated_at: string;
 }
 
 const LOCAL_D1_PREVIEW_KEY = 'peach_blossom_d1_preview_articles_v1';
+const LOCAL_D1_SEEDED_KEY = 'peach_blossom_d1_preview_seeded_v2';
 
 /**
  * 通过 Vite 原生 import.meta.glob 读取 /content/zh/ 下的所有静态 Markdown 文件
@@ -38,6 +45,7 @@ const rawMarkdownFiles = import.meta.glob('/content/zh/**/*.md', {
  * 内存缓存：从 Cloudflare Worker (/api/articles) 获取的已发布 D1 文章
  */
 let d1PublishedCache: ArticleDocument[] = [];
+let hasSyncedWithRemoteD1 = false;
 
 function normalizeCategory(rawCategory: string): ContentCategory {
   const map: Record<string, ContentCategory> = {
@@ -57,35 +65,163 @@ function normalizeCategory(rawCategory: string): ContentCategory {
   return map[rawCategory] || 'foodchain';
 }
 
-function mapD1RowToArticleDocument(row: D1ArticleRecord): ArticleDocument {
+function normalizeD1Record(row: Partial<D1ArticleRecord> & { id: number; title: string; category: string; content: string }): D1ArticleRecord {
+  const created = row.created_at || '2026-01-01 00:00:00';
   return {
-    path: `d1/${row.id}`,
+    id: Number(row.id),
+    title: row.title || '',
     category: normalizeCategory(row.category),
-    title: row.title,
-    description: '',
-    status: row.published ? 'published' : 'draft',
-    content: row.content,
-    updatedAt: row.updated_at || row.created_at
+    excerpt: typeof row.excerpt === 'string' ? row.excerpt : '',
+    content: row.content ?? '',
+    published: row.published === undefined ? 1 : row.published ? 1 : 0,
+    pinned: row.pinned ? 1 : 0,
+    created_at: created,
+    updated_at: row.updated_at || created
   };
 }
 
+function mapD1RowToArticleDocument(row: D1ArticleRecord): ArticleDocument {
+  const norm = normalizeD1Record(row);
+  return {
+    path: `d1/${norm.id}`,
+    category: norm.category,
+    title: norm.title,
+    description: norm.excerpt,
+    excerpt: norm.excerpt,
+    pinned: Boolean(norm.pinned),
+    status: norm.published ? 'published' : 'draft',
+    content: norm.content,
+    createdAt: norm.created_at,
+    updatedAt: norm.updated_at || norm.created_at
+  };
+}
+
+function sortD1RowsForPublic(rows: D1ArticleRecord[]): D1ArticleRecord[] {
+  return [...rows].sort((a, b) => {
+    const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+    if (pinDiff !== 0) return pinDiff;
+    const timeDiff = (b.created_at || '').localeCompare(a.created_at || '');
+    if (timeDiff !== 0) return timeDiff;
+    return b.id - a.id;
+  });
+}
+
+function sortD1RowsForAdmin(rows: D1ArticleRecord[]): D1ArticleRecord[] {
+  return [...rows].sort((a, b) => {
+    const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+    if (pinDiff !== 0) return pinDiff;
+    const timeDiff = (b.updated_at || '').localeCompare(a.updated_at || '');
+    if (timeDiff !== 0) return timeDiff;
+    return b.id - a.id;
+  });
+}
+
+/**
+ * 本地预览环境下读取模拟 D1 数据（首次访问时自动补齐内置正式文章）
+ */
 export function getLocalPreviewD1Rows(): D1ArticleRecord[] {
   try {
     const raw = window.localStorage.getItem(LOCAL_D1_PREVIEW_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as D1ArticleRecord[]) : [];
+    let rows: D1ArticleRecord[] = [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        rows = parsed.map((r) => normalizeD1Record(r));
+      }
+    }
+
+    const seeded = window.localStorage.getItem(LOCAL_D1_SEEDED_KEY);
+    if (!seeded) {
+      const existingTitles = new Set(
+        rows.map((r) => normalizeTitleForMatch(r.title))
+      );
+      let nextId = rows.reduce((max, r) => (r.id > max ? r.id : max), 0) + 1;
+
+      for (const seed of DEFAULT_SEED_ARTICLES) {
+        const normTitle = normalizeTitleForMatch(seed.title);
+        if (!existingTitles.has(normTitle)) {
+          rows.push({
+            id: nextId++,
+            title: seed.title,
+            category: seed.category,
+            excerpt: seed.excerpt,
+            content: seed.content,
+            published: seed.published,
+            pinned: seed.pinned,
+            created_at: seed.created_at,
+            updated_at: seed.created_at
+          });
+          existingTitles.add(normTitle);
+        }
+      }
+
+      window.localStorage.setItem(LOCAL_D1_PREVIEW_KEY, JSON.stringify(rows));
+      window.localStorage.setItem(LOCAL_D1_SEEDED_KEY, '1');
+    }
+
+    return sortD1RowsForAdmin(rows);
   } catch {
-    return [];
+    return DEFAULT_SEED_ARTICLES.map((seed, idx) => ({
+      id: idx + 1,
+      title: seed.title,
+      category: seed.category,
+      excerpt: seed.excerpt,
+      content: seed.content,
+      published: seed.published,
+      pinned: seed.pinned,
+      created_at: seed.created_at,
+      updated_at: seed.created_at
+    }));
   }
 }
 
 export function saveLocalPreviewD1Rows(rows: D1ArticleRecord[]): void {
   try {
-    window.localStorage.setItem(LOCAL_D1_PREVIEW_KEY, JSON.stringify(rows));
+    const normalized = rows.map((r) => normalizeD1Record(r));
+    window.localStorage.setItem(
+      LOCAL_D1_PREVIEW_KEY,
+      JSON.stringify(normalized)
+    );
+    window.localStorage.setItem(LOCAL_D1_SEEDED_KEY, '1');
   } catch {
     // ignore storage errors
   }
+}
+
+/**
+ * 在本地预览环境中安全补齐缺失的内置正式文章
+ */
+export function syncLocalMissingDefaultArticles(): number {
+  const rows = getLocalPreviewD1Rows();
+  const existingTitles = new Set(
+    rows.map((r) => normalizeTitleForMatch(r.title))
+  );
+  let nextId = rows.reduce((max, r) => (r.id > max ? r.id : max), 0) + 1;
+  let added = 0;
+
+  for (const seed of DEFAULT_SEED_ARTICLES) {
+    const normTitle = normalizeTitleForMatch(seed.title);
+    if (!existingTitles.has(normTitle)) {
+      rows.push({
+        id: nextId++,
+        title: seed.title,
+        category: seed.category,
+        excerpt: seed.excerpt,
+        content: seed.content,
+        published: seed.published,
+        pinned: seed.pinned,
+        created_at: seed.created_at,
+        updated_at: seed.created_at
+      });
+      existingTitles.add(normTitle);
+      added += 1;
+    }
+  }
+
+  if (added > 0) {
+    saveLocalPreviewD1Rows(rows);
+  }
+  return added;
 }
 
 /**
@@ -104,9 +240,13 @@ export async function syncD1PublishedArticles(): Promise<ArticleDocument[]> {
         dbBound?: boolean;
       };
       if (Array.isArray(data.articles) && data.dbBound !== false) {
-        d1PublishedCache = data.articles
-          .filter((r) => Boolean(r.published))
-          .map(mapD1RowToArticleDocument);
+        hasSyncedWithRemoteD1 = true;
+        const normalizedRows = sortD1RowsForPublic(
+          data.articles
+            .map((r) => normalizeD1Record(r))
+            .filter((r) => Boolean(r.published))
+        );
+        d1PublishedCache = normalizedRows.map(mapD1RowToArticleDocument);
         return d1PublishedCache;
       }
     }
@@ -114,42 +254,30 @@ export async function syncD1PublishedArticles(): Promise<ArticleDocument[]> {
     // 非 Worker 环境或离线时回退至本地预览存储
   }
 
-  const localRows = getLocalPreviewD1Rows().filter((r) => Boolean(r.published));
-  d1PublishedCache = localRows.map(mapD1RowToArticleDocument);
+  hasSyncedWithRemoteD1 = false;
+  const localPublished = sortD1RowsForPublic(
+    getLocalPreviewD1Rows().filter((r) => Boolean(r.published))
+  );
+  d1PublishedCache = localPublished.map(mapD1RowToArticleDocument);
   return d1PublishedCache;
 }
 
 /**
- * 获取全部文章（合并 D1 已发布文章、静态仓库 Markdown 文件与 localStorage 文章）
+ * 获取当前生效的正式文章列表（以 D1 后台管理的文章为准，支持置顶、下架与简介修改）
  */
 export function getAllArticles(): ArticleDocument[] {
-  const map = new Map<string, ArticleDocument>();
-
-  // 1. 加载 Cloudflare D1 已发布文章（使新发布的 D1 文章排在对应栏目列表前部，并与静态文章共存）
-  for (const d1Doc of d1PublishedCache) {
-    map.set(d1Doc.path, d1Doc);
-  }
-  if (d1PublishedCache.length === 0) {
-    const localRows = getLocalPreviewD1Rows().filter((r) => Boolean(r.published));
-    for (const row of localRows) {
-      const doc = mapD1RowToArticleDocument(row);
-      map.set(doc.path, doc);
-    }
+  if (hasSyncedWithRemoteD1) {
+    return [...d1PublishedCache];
   }
 
-  // 2. 加载仓库静态 Markdown 文件
-  for (const [rawPath, rawContent] of Object.entries(rawMarkdownFiles)) {
-    const doc = parseMarkdownFile(rawContent, rawPath);
-    map.set(doc.path, doc);
+  if (d1PublishedCache.length > 0) {
+    return [...d1PublishedCache];
   }
 
-  // 3. 合并 localStorage 中的草稿或已提交覆盖版本
-  const stored = articleStorage.getAllStored();
-  for (const [path, storedDoc] of Object.entries(stored)) {
-    map.set(path, storedDoc);
-  }
-
-  return Array.from(map.values());
+  const localPublished = sortD1RowsForPublic(
+    getLocalPreviewD1Rows().filter((r) => Boolean(r.published))
+  );
+  return localPublished.map(mapD1RowToArticleDocument);
 }
 
 /**
@@ -180,49 +308,19 @@ export function getArticleByPath(filePath: string): ArticleDocument | null {
 }
 
 /**
- * 获取指定一级栏目下所有公开（status === 'published'）的文章
+ * 获取指定一级栏目下所有公开（status === 'published'）的文章（置顶优先，其次按创建时间倒序）
  */
-export function getPublishedArticlesByCategory(category: ContentCategory): ArticleDocument[] {
+export function getPublishedArticlesByCategory(
+  category: ContentCategory
+): ArticleDocument[] {
   return getAllArticles().filter(
     (doc) => doc.category === category && doc.status === 'published'
   );
 }
 
 /**
- * 获取「文明编辑部」展示的正式文章列表：
- * 包含《智能生命宪法》《谁来审判创造者》《桃花浮岛：生命共同体协议》，
- * 以及 civdesk 目录下其他已发布（status === 'published'，含 D1 新增）的正式文章
+ * 获取「文明编辑部」展示的正式文章列表（置顶优先，支持在 /admin 中直接编辑、发布、下架、置顶和修改简介）
  */
 export function getCivDeskPublishedDocuments(): ArticleDocument[] {
-  const all = getAllArticles();
-  const orderedCorePaths = [
-    'content/zh/civdesk/constitution.md',
-    'content/zh/civdesk/creator.md',
-    'content/zh/floating-island/covenant.md'
-  ];
-
-  const result: ArticleDocument[] = [];
-  const includedPaths = new Set<string>();
-
-  for (const corePath of orderedCorePaths) {
-    const found = all.find((d) => d.path === corePath && d.status === 'published');
-    if (found) {
-      result.push(found);
-      includedPaths.add(found.path);
-    }
-  }
-
-  for (const doc of all) {
-    if (
-      doc.category === 'civdesk' &&
-      doc.status === 'published' &&
-      doc.path !== 'content/zh/civdesk/home.md' &&
-      !includedPaths.has(doc.path)
-    ) {
-      result.push(doc);
-      includedPaths.add(doc.path);
-    }
-  }
-
-  return result;
+  return getPublishedArticlesByCategory('civdesk');
 }

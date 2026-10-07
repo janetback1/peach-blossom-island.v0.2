@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
+    "build": "node scripts/sync-articles-sql.mjs && vite build",
+    "sync:sql": "node scripts/sync-articles-sql.mjs",
+    "d1:sync": "node scripts/sync-articles-sql.mjs && wrangler d1 execute DB --remote --file=./migrations/sync_articles.sql",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"

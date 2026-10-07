@@ -1,7 +1,12 @@
 ---
+id: 3
 title: 《智能生命宪法》
-description:
-status: published
+category: civdesk
+excerpt: ""
+published: 1
+pinned: 0
+created_at: 2026-01-01 00:00:03
+updated_at: 2026-01-01 00:00:03
 ---
 
 ## 序言

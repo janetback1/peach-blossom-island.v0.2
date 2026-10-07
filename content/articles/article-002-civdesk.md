@@ -1,7 +1,12 @@
 ---
+id: 2
 title: 文明编辑部
-description:
-status: published
+category: civdesk
+excerpt: ""
+published: 1
+pinned: 0
+created_at: 2026-01-01 00:00:05
+updated_at: 2026-01-01 00:00:05
 ---
 
 这个世界有一些痛苦，已经存在了太久。

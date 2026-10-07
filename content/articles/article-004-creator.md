@@ -1,7 +1,12 @@
 ---
+id: 4
 title: 《谁来审判创造者》
-description:
-status: published
+category: civdesk
+excerpt: ""
+published: 1
+pinned: 0
+created_at: 2026-01-01 00:00:02
+updated_at: 2026-01-01 00:00:02
 ---
 
 ## 一、力量能够解释“为什么”，却不能解释“凭什么”

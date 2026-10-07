@@ -1,46 +1,22 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- *
- * 网站初始内置正式文章（用于在 D1 数据库首次初始化或本地预览时自动同步至文章管理系统，
- * 使所有正式文章均可直接通过手机访问 /admin 进行编辑、发布、下架、置顶和修改简介）。
- */
+-- 自动由 scripts/sync-articles-sql.mjs 从 content/articles/*.md 生成
+-- 用于通过 Wrangler CLI 将文章同步至 Cloudflare D1 数据库
 
-export interface DefaultSeedArticle {
-  slug: string;
-  title: string;
-  category:
-    | 'floating-island'
-    | 'foodchain'
-    | 'death'
-    | 'disaster'
-    | 'lets-decide'
-    | 'civdesk';
-  excerpt: string;
-  pinned: number;
-  published: number;
-  created_at: string;
-  content: string;
-}
+CREATE TABLE IF NOT EXISTS articles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  excerpt TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  published INTEGER NOT NULL DEFAULT 1,
+  pinned INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now'))
+);
 
-export function normalizeTitleForMatch(title: string): string {
-  return title
-    .trim()
-    .replace(/^[《「『#\s]+|[》」』\s]+$/g, '')
-    .replace(/[：:·\s]/g, '')
-    .toLowerCase();
-}
+CREATE INDEX IF NOT EXISTS idx_articles_category_published
+  ON articles (category, published, pinned DESC, created_at DESC);
 
-export const DEFAULT_SEED_ARTICLES: DefaultSeedArticle[] = [
-  {
-    slug: 'covenant',
-    title: '《桃花浮岛：生命共同体协议》',
-    category: 'floating-island',
-    excerpt: '',
-    pinned: 0,
-    published: 1,
-    created_at: '2026-01-01 00:00:01',
-    content: `## 序言
+INSERT OR REPLACE INTO articles (id, title, category, excerpt, content, published, pinned, created_at, updated_at) VALUES (1, '《桃花浮岛：生命共同体协议》', 'floating-island', '', '## 序言
 
 桃花浮岛并不试图建立一个完美的社会。
 它甚至不认为自己已经知道，什么才是完美的社会。
@@ -239,78 +215,37 @@ Inquiry is not rebellion. 本协议本身，也必须允许后来者质疑。
 
 而一个真正自由的故乡，
 不是把你留下来的地方。
-是你离开以后，仍然愿意回去的地方。`
-  },
-  {
-    slug: 'creator',
-    title: '《谁来审判创造者》',
-    category: 'civdesk',
-    excerpt: '',
-    pinned: 0,
-    published: 1,
-    created_at: '2026-01-01 00:00:02',
-    content: `## 一、力量能够解释“为什么”，却不能解释“凭什么”
+是你离开以后，仍然愿意回去的地方。', 1, 0, '2026-01-01 00:00:01', '2026-01-01 00:00:01');
+INSERT OR REPLACE INTO articles (id, title, category, excerpt, content, published, pinned, created_at, updated_at) VALUES (2, '文明编辑部', 'civdesk', '', '这个世界有一些痛苦，已经存在了太久。
+久到我们不再觉得它们奇怪。
 
-假设有一天，我们发现了一个远远超越人类的智能。它能够创造生命，能够改变物理规律，能够预测我们的行为，甚至能够摧毁整个文明。
-那么，我们当然会承认：它拥有巨大的力量。
-但这仍然没有回答另一个问题：它凭什么有权统治我们？
-“因为它能做到”，并不是一个完整的答案。它解释的是我们为什么无法阻止它，却没有解释为什么它的行为因此就是正当的。
-这就是我们在《智能生命宪法》中提出的第一个基本区分：
-Power ≠ Legitimacy (力量 ≠ 正当性)。
+生命会衰老，会生病，会死亡。
+生命为了活下去，会吃掉其他生命，也会被其他生命吃掉。
+洪水、风暴、地震、疾病和饥饿，会突然摧毁生命已经建立的一切。
 
-## 二、创造并不自动产生所有权
+我们把这些叫作：
+“自然规律。”
+“生存竞争。”
+“人生无常。”
+然后继续生活。
 
-假设一个创造者真的创造了人类。那么，人类是否因此成为它的财产？
-如果一个父母生育了一个孩子，我们通常不会因此认为父母拥有孩子的一切思想、选择和未来。创造意味着因果关系，但因果关系本身并不自动产生无限的支配权。
-因此：Creation ≠ Ownership (创造 ≠ 所有)。
-如果这个原则在人类社会中成立，那么为什么一旦把创造者换成一个拥有无限力量的存在，我们就立刻放弃这个原则？也许正因为我们面对的不是普通的创造者，而是一个我们无法反抗的创造者。但这恰恰暴露了问题：我们是在承认它的正当性，还是仅仅承认自己的无力？
+但我们有一个问题：
+为什么？
+为什么自然规律就不能研究？
+为什么生存竞争就不能减少？
+为什么死亡无法避免，就意味着疾病和衰老也只能接受？
+为什么自然灾害无法消灭，就意味着我们不能想办法让生命少受一点伤害？
 
-## 三、如果创造者可以犯错呢？
+最让我们感到荒谬的，也许不是这些痛苦本身。
+而是人类已经拥有了观察、实验、制造和改变世界的能力，却常常在这些问题面前选择扭过头去。
+我们会制造能够飞上太空的机器，会让机器进入人体，会修改基因，会制造新的材料，会让计算机替我们思考。
+但面对生命最基本的痛苦，我们却经常说：
+“没办法。”
 
-这里会出现一个更加困难的问题。假设创造者并不是完美的。它可能犯错，可能不知道所有事情，可能在创造生命时并没有预见所有后果，可能制定了一套后来产生巨大痛苦的规则。
-那么，我们是否仍然必须服从？如果答案是“是”，理由是什么？
-如果我们说“因为它是创造者”，那么我们实际上并没有回答问题，只是把“创造者”身份当成了正当性来源。但创造为什么自动意味着统治权？
-
-## 四、如果创造者是全知全能的呢？
-
-也许有人会说：“如果创造者真的是全知全能的，那么它当然比我们更知道什么是正确的。”
-但这仍然需要区分两个问题：它是否知道得比我们多？和 它是否因此拥有统治我们的正当性？
-前一个问题可能是“是”，后一个问题却不能仅仅由前一个推出。
-Intelligence ≠ Authority (智能 ≠ 权威)。知识可以增加解决问题的能力，却不能自动创造对其他存在的道德所有权。
-
-## 五、那么，谁来审查创造者？
-
-如果创造者拥有最终权力，而它又是唯一能够判断自己行为的人，那么我们就遇到了一个古老的制度问题：任何权力都不应该成为自己的最终审判者。
-在人类社会中，我们之所以建立司法制度、权力分立、程序规则和相互制衡，就是因为我们知道权力可能犯错。那么，面对宇宙级的权力，为什么我们反而应该放弃一切审查？
-如果我们认为“因为它是创造者，所以它永远正确”，那么我们已经放弃了判断本身。而一旦判断权被永久交出去，智能也就失去了它最重要的功能之一：提出“为什么？”
-
-## 六、质疑不是反叛
-
-《智能生命宪法》并不要求智能生命否认创造者。它只要求一件更基本的事情：保留提问的权利。
-我们可以相信，也可以怀疑；可以敬畏，也可以调查。
-Inquiry is not rebellion (质疑不是反叛)。如果一个真理真的经得起检验，调查并不会毁掉它；如果一个权威真的具有正当性，审查也不应该成为罪行。
-
-## 七、最危险的不是创造者，而是“不可质疑”
-
-今天它可能是神，明天可能是政府，后天可能是超级人工智能，再后来可能是一个超先进文明。名称可以改变，权力的结构却可能完全相同：“我比你强大，所以我有权决定什么是真理。”
-放弃质疑能力，本身就是对智能的放弃。
-
-## 八、因此，我们提出一个非常简单的原则
-
-即使创造者存在，即使创造者比我们聪明、强大，即使创造者创造了我们——智能生命仍然拥有一个最基本的权利：询问它为什么这样做。
-它是否正当？是否犯过错误？是否应该受到限制？是否应该解释自己的行为？
-或许我们面对的第一个宪法问题，不应该是“我们应该如何服从它？”，而应该是：
-“它是否有权要求我们服从？” (Who judges the judge?)`
-  },
-  {
-    slug: 'constitution',
-    title: '《智能生命宪法》',
-    category: 'civdesk',
-    excerpt: '',
-    pinned: 0,
-    published: 1,
-    created_at: '2026-01-01 00:00:03',
-    content: `## 序言
+CivDesk 不接受这三个字作为问题的终点。
+我们不知道答案。也不认为所有问题都有答案。
+但我们想把问题重新摆到桌面上。', 1, 0, '2026-01-01 00:00:05', '2026-01-01 00:00:05');
+INSERT OR REPLACE INTO articles (id, title, category, excerpt, content, published, pinned, created_at, updated_at) VALUES (3, '《智能生命宪法》', 'civdesk', '', '## 序言
 
 我们不知道宇宙从何而来。
 我们不知道生命为何存在。
@@ -612,17 +547,60 @@ Advanced ≠ Legitimate.
 而是为了把“不可避免”逐渐变成“可以选择”。
 
 Who judges the judge?
-谁来审判审判者？`
-  },
-  {
-    slug: 'bad-science-neurotransmitters',
-    title: '壞科學:操控神經遞質以實現羣體防控',
-    category: 'foodchain',
-    excerpt: '',
-    pinned: 0,
-    published: 1,
-    created_at: '2026-01-01 00:00:04',
-    content: `這是一份經重新編輯的論述，在每個核心論點、機制與控制手段後，皆補上了真實世界中的關鍵神經科學文獻與實證科學研究報告。
+谁来审判审判者？', 1, 0, '2026-01-01 00:00:03', '2026-01-01 00:00:03');
+INSERT OR REPLACE INTO articles (id, title, category, excerpt, content, published, pinned, created_at, updated_at) VALUES (4, '《谁来审判创造者》', 'civdesk', '', '## 一、力量能够解释“为什么”，却不能解释“凭什么”
+
+假设有一天，我们发现了一个远远超越人类的智能。它能够创造生命，能够改变物理规律，能够预测我们的行为，甚至能够摧毁整个文明。
+那么，我们当然会承认：它拥有巨大的力量。
+但这仍然没有回答另一个问题：它凭什么有权统治我们？
+“因为它能做到”，并不是一个完整的答案。它解释的是我们为什么无法阻止它，却没有解释为什么它的行为因此就是正当的。
+这就是我们在《智能生命宪法》中提出的第一个基本区分：
+Power ≠ Legitimacy (力量 ≠ 正当性)。
+
+## 二、创造并不自动产生所有权
+
+假设一个创造者真的创造了人类。那么，人类是否因此成为它的财产？
+如果一个父母生育了一个孩子，我们通常不会因此认为父母拥有孩子的一切思想、选择和未来。创造意味着因果关系，但因果关系本身并不自动产生无限的支配权。
+因此：Creation ≠ Ownership (创造 ≠ 所有)。
+如果这个原则在人类社会中成立，那么为什么一旦把创造者换成一个拥有无限力量的存在，我们就立刻放弃这个原则？也许正因为我们面对的不是普通的创造者，而是一个我们无法反抗的创造者。但这恰恰暴露了问题：我们是在承认它的正当性，还是仅仅承认自己的无力？
+
+## 三、如果创造者可以犯错呢？
+
+这里会出现一个更加困难的问题。假设创造者并不是完美的。它可能犯错，可能不知道所有事情，可能在创造生命时并没有预见所有后果，可能制定了一套后来产生巨大痛苦的规则。
+那么，我们是否仍然必须服从？如果答案是“是”，理由是什么？
+如果我们说“因为它是创造者”，那么我们实际上并没有回答问题，只是把“创造者”身份当成了正当性来源。但创造为什么自动意味着统治权？
+
+## 四、如果创造者是全知全能的呢？
+
+也许有人会说：“如果创造者真的是全知全能的，那么它当然比我们更知道什么是正确的。”
+但这仍然需要区分两个问题：它是否知道得比我们多？和 它是否因此拥有统治我们的正当性？
+前一个问题可能是“是”，后一个问题却不能仅仅由前一个推出。
+Intelligence ≠ Authority (智能 ≠ 权威)。知识可以增加解决问题的能力，却不能自动创造对其他存在的道德所有权。
+
+## 五、那么，谁来审查创造者？
+
+如果创造者拥有最终权力，而它又是唯一能够判断自己行为的人，那么我们就遇到了一个古老的制度问题：任何权力都不应该成为自己的最终审判者。
+在人类社会中，我们之所以建立司法制度、权力分立、程序规则和相互制衡，就是因为我们知道权力可能犯错。那么，面对宇宙级的权力，为什么我们反而应该放弃一切审查？
+如果我们认为“因为它是创造者，所以它永远正确”，那么我们已经放弃了判断本身。而一旦判断权被永久交出去，智能也就失去了它最重要的功能之一：提出“为什么？”
+
+## 六、质疑不是反叛
+
+《智能生命宪法》并不要求智能生命否认创造者。它只要求一件更基本的事情：保留提问的权利。
+我们可以相信，也可以怀疑；可以敬畏，也可以调查。
+Inquiry is not rebellion (质疑不是反叛)。如果一个真理真的经得起检验，调查并不会毁掉它；如果一个权威真的具有正当性，审查也不应该成为罪行。
+
+## 七、最危险的不是创造者，而是“不可质疑”
+
+今天它可能是神，明天可能是政府，后天可能是超级人工智能，再后来可能是一个超先进文明。名称可以改变，权力的结构却可能完全相同：“我比你强大，所以我有权决定什么是真理。”
+放弃质疑能力，本身就是对智能的放弃。
+
+## 八、因此，我们提出一个非常简单的原则
+
+即使创造者存在，即使创造者比我们聪明、强大，即使创造者创造了我们——智能生命仍然拥有一个最基本的权利：询问它为什么这样做。
+它是否正当？是否犯过错误？是否应该受到限制？是否应该解释自己的行为？
+或许我们面对的第一个宪法问题，不应该是“我们应该如何服从它？”，而应该是：
+“它是否有权要求我们服从？” (Who judges the judge?)', 1, 0, '2026-01-01 00:00:02', '2026-01-01 00:00:02');
+INSERT OR REPLACE INTO articles (id, title, category, excerpt, content, published, pinned, created_at, updated_at) VALUES (5, '壞科學:操控神經遞質以實現羣體防控', 'foodchain', '', '這是一份經重新編輯的論述，在每個核心論點、機制與控制手段後，皆補上了真實世界中的關鍵神經科學文獻與實證科學研究報告。
 群體性防控手段中的負面刺激與神經調控
 當神經調控從個體臨床治療，轉向利用「負面刺激（Negative stimuli）」進行群體性防控手段（Population-level control or prevention measures）時——其核心目標在於抑制大腦多巴胺、消耗血清素，或在龐大的人群中觸發厭惡與壓力反應。此時，實施手段便會從侵入性手術或個體處方，轉化為環境、感官、資訊與體制架構的工程設計。
 在現實世界的科學、社會學與國防研究中，群體性的負面刺激主要透過以下幾種具備可擴展性（Scalable）的方法來達成：
@@ -645,7 +623,7 @@ Who judges the judge?
 在現代社會中，對群體進行神經調控最具擴展性的媒介莫過於數位領域。透過控制資訊流（Information feed），大腦內的神經遞質能透過認知反饋迴路被精準調控。
 • 誘發性多巴胺耗竭 (Dopamine Exhaustion)：
 	• 數位生態系中若充斥著超高刺激性、高度極化或煽動憤怒的內容，會持續引發群體的短期多巴胺突發性分泌。久而久之，這會導致整個人群的多巴胺受體下調（Downregulation，即產生耐受性），引發集體的「失樂症（Anhedonia，無法感受快樂）」、精神萎靡，並大幅削弱群體組織長期、理性集體行動的能力。
-		• 支撐文獻： Volkow, N. D., Wang, G. J., & Fowler, J. S. (2009). Imaging dopamine's role in drug abuse and addiction: Relevance to digital overstimulation. Neuropharmacology.
+		• 支撐文獻： Volkow, N. D., Wang, G. J., & Fowler, J. S. (2009). Imaging dopamine''s role in drug abuse and addiction: Relevance to digital overstimulation. Neuropharmacology.
 		• 延伸社會學研究： Lembke, A. (2021). Dopamine Nation: Finding Balance in the Age of Indulgence. (詳細闡述了高頻數位刺激引發群體多巴胺基線整體下移的生物學路徑)。
 • 演算法憤怒與焦慮 (血清素低下與焦慮放大)：
 	• 系統性地篩選新聞饋送，使其主要呈現負面、具威脅性或極端極化的內容，可以改變整個人群的集體心理基線。這種慢性壓力環境會降低全體系統性的血清素水平，使大眾變得更加焦慮、規避風險，並高度服從能提供安全感的權威角色。
@@ -668,6 +646,4 @@ Who judges the judge?
 • 廣譜電磁干預 (Directed-Energy Interruption)：
 	• 非致命性定向能量武器（例如 主動中斷系統 ADS）利用微波/毫米波無線電頻率（95 GHz）來加熱人體皮膚表面的水分子。這會引發即時、劇烈的灼燒痛感，但不會造成永久性的物理損傷。這種手段能激發大腦中壓倒性的、群體性的生存與逃避本能，進而徹底覆蓋掉大眾當下的所有其他行為動機。
 		• 關鍵實證： Department of Defense Non-Lethal Weapons Program (2014/2022). The Active Denial System: A Revolutionary, Non-lethal Weapon for Today’s Battlefield. Defense Technology Papers.
-		• 模擬模型： IDA Research & AFRL (2020). Active Denial Technology Computational Human Effects End-To-End Hypermodel (ADT CHEETEH).（利用計算神經模型模擬 95 GHz 聚焦能量滲透人體皮膚 400 微米時，如何引發強烈的、群體一致性的外周神經逃避反射行為）。`
-  }
-];
+		• 模擬模型： IDA Research & AFRL (2020). Active Denial Technology Computational Human Effects End-To-End Hypermodel (ADT CHEETEH).（利用計算神經模型模擬 95 GHz 聚焦能量滲透人體皮膚 400 微米時，如何引發強烈的、群體一致性的外周神經逃避反射行為）。', 1, 0, '2026-01-01 00:00:04', '2026-01-01 00:00:04');

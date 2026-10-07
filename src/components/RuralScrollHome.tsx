@@ -14,8 +14,6 @@ interface RuralScrollHomeProps {
 
 export const RuralScrollHome: React.FC<RuralScrollHomeProps> = () => {
   const [activeArticlePath, setActiveArticlePath] = useState<string | null>(null);
-
-  const homeDoc = getArticleByPath('content/zh/civdesk/home.md');
   const publishedDocs = getCivDeskPublishedDocuments();
 
   if (activeArticlePath) {
@@ -35,41 +33,29 @@ export const RuralScrollHome: React.FC<RuralScrollHomeProps> = () => {
   }
 
   return (
-    <article className="max-w-2xl mx-auto px-5 sm:px-8 pt-3 pb-12 sm:pt-4 sm:pb-14 text-[#3d3832] font-serif-sc space-y-6">
-      {/* 文明编辑部正文（去除与顶部导航重复的「文明编辑部」标题） */}
-      {homeDoc && (
-        <section>
-          <div className="text-[14.5px] sm:text-[15px] leading-[2.0] text-[#3d3832] whitespace-pre-line">
-            {homeDoc.content}
-          </div>
-        </section>
-      )}
-
-      {/* 正式文章列表：与顶部菜单使用统一字号，若文章有简介则显示在标题下方 */}
+    <article className="max-w-2xl mx-auto px-5 sm:px-8 pt-3 pb-12 sm:pt-4 sm:pb-14 text-[#3d3832] font-serif-sc">
       {publishedDocs.length > 0 && (
-        <section className="border-t border-[#ded7c7]/80 pt-4">
-          <ul className="space-y-2.5">
-            {publishedDocs.map((doc) => (
-              <li key={doc.path}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveArticlePath(doc.path);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="text-left text-[13px] sm:text-sm text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer"
-                >
-                  {doc.title}
-                </button>
-                {doc.excerpt && doc.excerpt.trim() !== '' && (
-                  <p className="mt-0.5 text-xs text-[#6e665c] leading-relaxed">
-                    {doc.excerpt}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <ul className="space-y-2.5">
+          {publishedDocs.map((doc) => (
+            <li key={doc.path}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveArticlePath(doc.path);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="text-left text-[13px] sm:text-sm text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer break-words"
+              >
+                {doc.title}
+              </button>
+              {doc.excerpt && doc.excerpt.trim() !== '' && (
+                <p className="mt-0.5 text-xs text-[#6e665c] leading-relaxed break-words">
+                  {doc.excerpt}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
     </article>
   );

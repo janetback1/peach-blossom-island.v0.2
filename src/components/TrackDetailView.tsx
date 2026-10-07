@@ -59,12 +59,12 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   setActiveArticlePath(doc.path);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="text-left text-[13px] sm:text-sm text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer"
+                className="text-left text-[13px] sm:text-sm text-[#35302a] hover:text-[#B83A5A] transition-colors cursor-pointer break-words"
               >
                 {doc.title}
               </button>
               {doc.excerpt && doc.excerpt.trim() !== '' && (
-                <p className="mt-0.5 text-xs text-[#6e665c] leading-relaxed">
+                <p className="mt-0.5 text-xs text-[#6e665c] leading-relaxed break-words">
                   {doc.excerpt}
                 </p>
               )}

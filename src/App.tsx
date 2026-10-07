@@ -9,29 +9,26 @@ import { RuralScrollHome } from './components/RuralScrollHome';
 import { TrackDetailView } from './components/TrackDetailView';
 import { FloatingIslandView } from './components/FloatingIslandView';
 import { LetsDecideView } from './components/LetsDecideView';
-import { ArticleEditorView } from './components/ArticleEditorView';
-import { AdminD1View } from './components/AdminD1View';
-import { syncD1PublishedArticles } from './content/loader';
+import {
+  getSiteFooterText,
+  syncD1PublishedArticles
+} from './content/loader';
 
-function checkIsAdminRoute(): boolean {
-  const { pathname, hash } = window.location;
-  return (
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/') ||
-    hash === '#/admin'
-  );
+function checkIsNotFoundRoute(): boolean {
+  const { pathname, hash, search } = window.location;
+  const isRootPath =
+    pathname === '/' || pathname === '' || pathname === '/index.html';
+  const isValidHash =
+    hash === '' || hash === '#' || hash === '#/';
+  const isValidSearch = search === '';
+  return !isRootPath || !isValidHash || !isValidSearch;
 }
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<NavMenu>('island');
-  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(checkIsAdminRoute);
-  const [isEditorOpen, setIsEditorOpen] = useState<boolean>(() => {
-    return (
-      window.location.hash === '#/editor' ||
-      new URLSearchParams(window.location.search).get('editor') === '1'
-    );
-  });
+  const [isNotFound, setIsNotFound] = useState<boolean>(checkIsNotFoundRoute);
   const [refreshTick, setRefreshTick] = useState(0);
+  const footerText = getSiteFooterText();
 
   useEffect(() => {
     syncD1PublishedArticles().then(() => {
@@ -41,10 +38,7 @@ export default function App() {
 
   useEffect(() => {
     const handleRouteChange = () => {
-      setIsAdminOpen(checkIsAdminRoute());
-      if (window.location.hash === '#/editor') {
-        setIsEditorOpen(true);
-      }
+      setIsNotFound(checkIsNotFoundRoute());
     };
     window.addEventListener('hashchange', handleRouteChange);
     window.addEventListener('popstate', handleRouteChange);
@@ -59,31 +53,15 @@ export default function App() {
   };
 
   const handleSelectTab = (tab: NavMenu) => {
-    setIsAdminOpen(false);
-    setIsEditorOpen(false);
+    setIsNotFound(false);
     if (
-      window.location.pathname === '/admin' ||
-      window.location.pathname.startsWith('/admin/') ||
-      window.location.hash === '#/admin' ||
-      window.location.hash === '#/editor'
+      window.location.pathname !== '/' ||
+      window.location.hash !== '' ||
+      window.location.search !== ''
     ) {
       window.history.pushState(null, '', '/');
     }
     setCurrentTab(tab);
-    scrollToTop();
-  };
-
-  const closeAdmin = () => {
-    setIsAdminOpen(false);
-    window.history.pushState(null, '', '/');
-    scrollToTop();
-  };
-
-  const closeEditor = () => {
-    setIsEditorOpen(false);
-    if (window.location.hash === '#/editor') {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
     scrollToTop();
   };
 
@@ -96,19 +74,27 @@ export default function App() {
       />
 
       {/* 页面文稿内容区 */}
-      <main className="flex-1 w-full" key={refreshTick}>
-        {isAdminOpen ? (
-          <AdminD1View
-            onBackToSite={closeAdmin}
-            onArticlesChanged={() => setRefreshTick((t) => t + 1)}
-          />
-        ) : isEditorOpen ? (
-          <ArticleEditorView
-            onClose={closeEditor}
-            onSaved={() => setRefreshTick((t) => t + 1)}
-          />
+      <main className="flex-1 w-full">
+        {isNotFound ? (
+          <section className="max-w-2xl mx-auto px-5 sm:px-8 pt-10 pb-16 text-[#3d3832] font-serif-sc space-y-4">
+            <h1 className="text-base sm:text-lg font-medium text-[#2c2824] tracking-wider">
+              未找到页面
+            </h1>
+            <p className="text-sm leading-relaxed text-[#6e665c]">
+              您访问的页面不存在，或链接已变更。
+            </p>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => handleSelectTab('island')}
+                className="min-h-[34px] px-3.5 py-1.5 text-xs sm:text-sm border border-[#cfc6b4] bg-[#f1ece1] text-[#2c2824] hover:text-[#B83A5A] transition-colors cursor-pointer"
+              >
+                返回桃花浮岛首页
+              </button>
+            </div>
+          </section>
         ) : (
-          <>
+          <div key={refreshTick}>
             {currentTab === 'home' && (
               <RuralScrollHome onNavigateTab={handleSelectTab} />
             )}
@@ -152,16 +138,25 @@ export default function App() {
                 onNavigateToIslandArticle={() => handleSelectTab('island')}
               />
             )}
-          </>
+          </div>
         )}
       </main>
 
-      {/* 素雅宣纸尾跋页脚 */}
-      <footer className="w-full border-t border-[#e2dac9]/70 py-7 px-5 sm:px-8 text-xs text-[#787066] font-serif-sc">
-        <div className="max-w-2xl mx-auto">
-          <span>
-            一个真正自由的故乡，不是把你留下来的地方，是你离开以后，仍然愿意回去的地方。
-          </span>
+      {/* 素雅宣纸尾跋页脚（紧凑两行布局） */}
+      <footer className="w-full border-t border-[#e2dac9]/70 py-2.5 sm:py-3.5 px-2.5 sm:px-8 text-[9.5px] min-[390px]:text-[10.5px] sm:text-xs text-[#787066] font-serif-sc">
+        <div className="max-w-2xl mx-auto flex flex-col gap-[3px]">
+          {footerText
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line, index) => (
+              <p
+                key={index}
+                className="m-0 p-0 leading-[1.2] whitespace-nowrap"
+              >
+                {line}
+              </p>
+            ))}
         </div>
       </footer>
     </div>

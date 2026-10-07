@@ -1,7 +1,12 @@
 ---
+id: 1
 title: 《桃花浮岛：生命共同体协议》
-description:
-status: published
+category: floating-island
+excerpt: ""
+published: 1
+pinned: 0
+created_at: 2026-01-01 00:00:01
+updated_at: 2026-01-01 00:00:01
 ---
 
 ## 序言
